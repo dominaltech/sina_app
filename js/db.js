@@ -300,12 +300,113 @@
       return newProd;
     }
 
+    normalizeEntry(row) {
+      const firstItem = (row.procurement_items && row.procurement_items.length > 0) ? row.procurement_items[0] : null;
+      const images = (row.payment_attachments && Array.isArray(row.payment_attachments))
+        ? row.payment_attachments.map(att => att.file_url)
+        : (Array.isArray(row.images) ? row.images : []);
+
+      return {
+        id: row.id,
+        representative_id: row.representative_id,
+        rep_name: row.rep_name || (row.profiles ? row.profiles.name : 'Rahul Sharma'),
+        firm_id: row.firm_id,
+        firm_name: row.firm_name,
+        contact_person: row.contact_person,
+        mobile: row.mobile,
+        address: row.address,
+        category_name: firstItem ? firstItem.category_name : (row.category_name || ''),
+        type: firstItem ? (firstItem.product_name || firstItem.type) : (row.type || ''),
+        quantity: firstItem ? parseFloat(firstItem.quantity) : (parseFloat(row.quantity) || 0),
+        unit: firstItem ? firstItem.unit : (row.unit || 'per_kg'),
+        rate: firstItem ? parseFloat(firstItem.rate) : (parseFloat(row.rate) || 0),
+        total_amount: parseFloat(row.total_amount) || 0,
+        payment_mode: row.payment_mode,
+        cash_amount: parseFloat(row.cash_amount) || 0,
+        upi_id: row.upi_id || '',
+        upi_utr: row.upi_utr || '',
+        images: images,
+        status: row.status,
+        created_at: row.created_at,
+        items: row.procurement_items || []
+      };
+    }
+
     // 3. PROCUREMENT ENTRIES (Form submission matching sketch)
     async saveProcurementEntry(entry) {
-      const entries = JSON.parse(localStorage.getItem('sina_entries') || '[]');
-      const newEntry = {
-        id: 'entry_' + Date.now(),
+      const isCash = entry.payment_mode === 'cash';
+      // In Supabase schema, status IN ('pending', 'completed', 'verified', 'rejected')
+      const entryStatus = isCash ? 'completed' : 'pending';
+
+      const headerPayload = {
         representative_id: entry.representative_id || '22222222-2222-2222-2222-222222222222',
+        firm_name: entry.firm_name,
+        contact_person: entry.contact_person,
+        mobile: entry.mobile,
+        address: entry.address,
+        total_amount: parseFloat(entry.total_amount) || 0,
+        payment_mode: entry.payment_mode,
+        cash_amount: parseFloat(entry.cash_amount) || 0,
+        upi_id: entry.upi_id || null,
+        upi_utr: entry.upi_utr || null,
+        status: entryStatus
+      };
+
+      // 1. Post entry header to Supabase
+      const remote = await this.supabaseRequest('procurement_entries', {
+        method: 'POST',
+        body: JSON.stringify(headerPayload)
+      });
+
+      const createdId = (remote && Array.isArray(remote) && remote[0]) ? remote[0].id : ('entry_' + Date.now());
+
+      // 2. Post line item to procurement_items
+      if (remote && Array.isArray(remote) && remote[0]) {
+        await this.supabaseRequest('procurement_items', {
+          method: 'POST',
+          body: JSON.stringify({
+            entry_id: createdId,
+            category_name: entry.category_name || 'General',
+            product_name: entry.type || entry.product_name || entry.category_name || 'Goods',
+            unit: entry.unit || 'per_kg',
+            quantity: parseFloat(entry.quantity) || 0,
+            rate: parseFloat(entry.rate) || 0,
+            line_total: parseFloat(entry.total_amount) || 0
+          })
+        });
+
+        // 3. Post attachments to payment_attachments
+        if (Array.isArray(entry.images) && entry.images.length > 0) {
+          for (const imgUrl of entry.images) {
+            await this.supabaseRequest('payment_attachments', {
+              method: 'POST',
+              body: JSON.stringify({
+                entry_id: createdId,
+                file_type: isCash ? 'receipt' : 'passbook',
+                file_url: imgUrl,
+                file_name: 'receipt_' + Date.now()
+              })
+            });
+          }
+        }
+
+        // 4. Post alert notification for Admin
+        this.supabaseRequest('notifications', {
+          method: 'POST',
+          body: JSON.stringify({
+            representative_id: headerPayload.representative_id,
+            title: 'New Procurement Entry',
+            message: `${entry.rep_name || 'Representative'} logged ${entry.firm_name} (₹${headerPayload.total_amount})`,
+            type: 'procurement',
+            reference_id: createdId
+          })
+        });
+      }
+
+      // Build normalized entry object
+      const newEntry = {
+        id: createdId,
+        representative_id: headerPayload.representative_id,
         rep_name: entry.rep_name || 'Rahul Sharma',
         firm_id: entry.firm_id || null,
         firm_name: entry.firm_name,
@@ -317,47 +418,44 @@
         quantity: parseFloat(entry.quantity) || 0,
         unit: entry.unit || 'per_kg',
         rate: parseFloat(entry.rate) || 0,
-        total_amount: parseFloat(entry.total_amount) || 0,
-        payment_mode: entry.payment_mode, // cash | upi | bank_transfer
-        cash_amount: parseFloat(entry.cash_amount) || 0,
+        total_amount: headerPayload.total_amount,
+        payment_mode: entry.payment_mode,
+        cash_amount: headerPayload.cash_amount,
         upi_id: entry.upi_id || '',
         upi_utr: entry.upi_utr || '',
-        images: entry.images || [], // base64 strings or URLs for Passbook/Cheque/Cash receipts
-        status: entry.payment_mode === 'cash' ? 'completed' : 'pending_approval',
-        created_at: new Date().toISOString()
+        images: entry.images || [],
+        status: entryStatus,
+        created_at: (remote && remote[0]?.created_at) ? remote[0].created_at : new Date().toISOString()
       };
 
+      const entries = JSON.parse(localStorage.getItem('sina_entries') || '[]');
       entries.unshift(newEntry);
       localStorage.setItem('sina_entries', JSON.stringify(entries));
 
-      // Attempt Supabase insert
-      this.supabaseRequest('procurement_entries', {
-        method: 'POST',
-        body: JSON.stringify({
-          representative_id: newEntry.representative_id,
-          firm_name: newEntry.firm_name,
-          contact_person: newEntry.contact_person,
-          mobile: newEntry.mobile,
-          address: newEntry.address,
-          total_amount: newEntry.total_amount,
-          payment_mode: newEntry.payment_mode,
-          cash_amount: newEntry.cash_amount,
-          upi_id: newEntry.upi_id,
-          upi_utr: newEntry.upi_utr,
-          status: newEntry.status
-        })
-      });
-
-      // Broadcast instant notification to Admin app
+      // Broadcast instant notification to Admin app / windows
       this.broadcast('NEW_PROCUREMENT_ENTRY', newEntry);
       return newEntry;
     }
 
     async getEntries(repId = null) {
-      const remote = await this.supabaseRequest('procurement_entries?select=*&order=created_at.desc');
-      if (remote && Array.isArray(remote) && remote.length > 0) {
-        // Merge or replace
+      let query = 'procurement_entries?select=*,procurement_items(*),payment_attachments(*)&order=created_at.desc';
+      if (repId) {
+        query += `&representative_id=eq.${repId}`;
       }
+      const remote = await this.supabaseRequest(query);
+      if (remote && Array.isArray(remote)) {
+        const normalized = remote.map(row => this.normalizeEntry(row));
+        if (!repId) {
+          localStorage.setItem('sina_entries', JSON.stringify(normalized));
+        } else {
+          // Merge with cached entries from other representatives
+          const local = JSON.parse(localStorage.getItem('sina_entries') || '[]');
+          const other = local.filter(e => e.representative_id !== repId);
+          localStorage.setItem('sina_entries', JSON.stringify([...normalized, ...other]));
+        }
+        return normalized;
+      }
+      // Offline fallback
       const local = JSON.parse(localStorage.getItem('sina_entries') || '[]');
       if (repId) {
         return local.filter(e => e.representative_id === repId);
@@ -368,20 +466,24 @@
     // 4. DAILY FLOAT & EXPENSES
     async getDailyFloat(repId) {
       const today = new Date().toISOString().split('T')[0];
+      const remote = await this.supabaseRequest(`daily_floats?representative_id=eq.${repId}&order=date.desc&limit=1`);
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        const rf = remote[0];
+        const floats = JSON.parse(localStorage.getItem('sina_floats') || '[]');
+        const idx = floats.findIndex(f => f.representative_id === repId && f.date === rf.date);
+        if (idx !== -1) floats[idx] = rf; else floats.unshift(rf);
+        localStorage.setItem('sina_floats', JSON.stringify(floats));
+        return parseFloat(rf.float_amount) || 0;
+      }
+
       const floats = JSON.parse(localStorage.getItem('sina_floats') || '[]');
-      
-      // Look for float matching repId today
       let found = floats.find(f => String(f.representative_id) === String(repId) && f.date === today);
-      
-      // If not found for today, get latest float recorded for this rep
       if (!found) {
         const repFloats = floats.filter(f => String(f.representative_id) === String(repId));
         if (repFloats.length > 0) {
           found = repFloats[repFloats.length - 1];
         }
       }
-
-      // If rep has an assigned float, return it, otherwise return 0 (or default 15000 if rep is default Rahul)
       if (found) {
         return parseFloat(found.float_amount) || 0;
       }
@@ -389,25 +491,57 @@
     }
 
     async saveExpense(expense) {
-      const expenses = JSON.parse(localStorage.getItem('sina_expenses') || '[]');
-      const newExp = {
-        id: 'exp_' + Date.now(),
-        representative_id: expense.representative_id,
-        rep_name: expense.rep_name || 'Rahul Sharma',
+      const payload = {
+        representative_id: expense.representative_id || '22222222-2222-2222-2222-222222222222',
         date: new Date().toISOString().split('T')[0],
         amount: parseFloat(expense.amount) || 0,
         category: expense.category || 'fuel',
-        notes: expense.notes || '',
+        notes: expense.notes || ''
+      };
+
+      const remote = await this.supabaseRequest('expenses', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      const newExp = (remote && Array.isArray(remote) && remote[0]) ? remote[0] : {
+        id: 'exp_' + Date.now(),
+        ...payload,
         created_at: new Date().toISOString()
       };
+      newExp.rep_name = expense.rep_name || 'Rahul Sharma';
+
+      const expenses = JSON.parse(localStorage.getItem('sina_expenses') || '[]');
       expenses.unshift(newExp);
       localStorage.setItem('sina_expenses', JSON.stringify(expenses));
+
+      if (remote && Array.isArray(remote) && remote[0]) {
+        this.supabaseRequest('notifications', {
+          method: 'POST',
+          body: JSON.stringify({
+            representative_id: payload.representative_id,
+            title: 'New Field Expense Logged',
+            message: `${newExp.rep_name} logged ₹${payload.amount} for ${payload.category}`,
+            type: 'expense',
+            reference_id: newExp.id
+          })
+        });
+      }
 
       this.broadcast('NEW_EXPENSE', newExp);
       return newExp;
     }
 
     async getExpenses(repId = null) {
+      let query = 'expenses?select=*&order=created_at.desc';
+      if (repId) query += `&representative_id=eq.${repId}`;
+      const remote = await this.supabaseRequest(query);
+      if (remote && Array.isArray(remote)) {
+        if (!repId) {
+          localStorage.setItem('sina_expenses', JSON.stringify(remote));
+        }
+        return remote;
+      }
       const expenses = JSON.parse(localStorage.getItem('sina_expenses') || '[]');
       if (repId) {
         return expenses.filter(e => e.representative_id === repId);
