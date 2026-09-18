@@ -86,7 +86,7 @@
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class="card text-center" style="padding: 30px 16px;">
-          <p class="text-muted">No procurement records found.</p>
+          <p class="text-muted">No purchase records found.</p>
           <a href="entry.html" class="btn btn-primary" style="margin-top: 12px;">+ Create New Entry</a>
         </div>
       `;
