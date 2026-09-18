@@ -9,6 +9,7 @@
     const isHome = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath.endsWith('SINA%20App/') || currentPath.endsWith('SINA App/');
     const isEntry = currentPath.endsWith('entry.html');
     const isRecords = currentPath.endsWith('records.html');
+    const isProducts = currentPath.endsWith('products.html');
     const isProfile = currentPath.endsWith('profile.html');
 
     const icons = window.SINA_ICONS;
@@ -86,6 +87,10 @@
           <a href="records.html" class="drawer-link ${isRecords ? 'active' : ''}">
             <span class="nav-icon">${icons.get('records', { size: 20 })}</span>
             <span class="nav-label">Orders & Firms Directory</span>
+          </a>
+          <a href="products.html" class="drawer-link ${isProducts ? 'active' : ''}">
+            <span class="nav-icon">${icons.get('catalog', { size: 20 })}</span>
+            <span class="nav-label">Commodities & Products</span>
           </a>
           <a href="profile.html" class="drawer-link ${isProfile ? 'active' : ''}">
             <span class="nav-icon">${icons.get('cash', { size: 20 })}</span>

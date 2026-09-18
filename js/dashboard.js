@@ -41,6 +41,8 @@
     if (visitsCountEl) visitsCountEl.textContent = summary.visitsCount;
     if (totalProcurementEl) totalProcurementEl.textContent = '₹' + summary.totalProcurementAmount.toLocaleString('en-IN');
     if (cashInHandEl) cashInHandEl.textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
+    const cashInHand2El = document.getElementById('kpi-cash-in-hand-2');
+    if (cashInHand2El) cashInHand2El.textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
 
     if (floatAmountEl) floatAmountEl.textContent = '₹' + summary.float.toLocaleString('en-IN');
     if (cashCollectedEl) cashCollectedEl.textContent = '+ ₹' + summary.cashCollected.toLocaleString('en-IN');

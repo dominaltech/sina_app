@@ -40,8 +40,18 @@
       if ('BroadcastChannel' in window) {
         this.channel = new BroadcastChannel(window.SINA_CONFIG.BROADCAST_CHANNEL);
         this.channel.onmessage = (event) => {
-          if (event.data && event.data.type === 'SYSTEM_RESET') {
-            this.handleSystemReset();
+          if (event.data) {
+            if (event.data.type === 'SYSTEM_RESET') {
+              this.handleSystemReset();
+            } else if (event.data.type === 'FLOAT_UPDATED') {
+              this.handleFloatUpdated(event.data.payload);
+            } else if (event.data.type === 'PRODUCT_ADDED') {
+              this.handleProductAdded(event.data.payload);
+            } else if (event.data.type === 'PRODUCT_DELETED') {
+              this.handleProductDeleted(event.data.payload);
+            } else if (event.data.type === 'CATEGORY_ADDED') {
+              this.handleCategoryAdded(event.data.payload);
+            }
           }
         };
       }
@@ -52,6 +62,14 @@
             const data = JSON.parse(e.newValue);
             if (data.type === 'SYSTEM_RESET') {
               this.handleSystemReset();
+            } else if (data.type === 'FLOAT_UPDATED') {
+              this.handleFloatUpdated(data.payload);
+            } else if (data.type === 'PRODUCT_ADDED') {
+              this.handleProductAdded(data.payload);
+            } else if (data.type === 'PRODUCT_DELETED') {
+              this.handleProductDeleted(data.payload);
+            } else if (data.type === 'CATEGORY_ADDED') {
+              this.handleCategoryAdded(data.payload);
             }
           } catch (err) {}
         }
@@ -63,6 +81,49 @@
         window.refreshCurrentPageData();
       } else {
         window.location.reload();
+      }
+    }
+
+    handleFloatUpdated(payload) {
+      if (window.refreshCurrentPageData) {
+        window.refreshCurrentPageData();
+      }
+    }
+
+    handleProductAdded(payload) {
+      if (payload && payload.id) {
+        const products = JSON.parse(localStorage.getItem('sina_products') || '[]');
+        if (!products.some(p => p.id === payload.id)) {
+          products.push(payload);
+          localStorage.setItem('sina_products', JSON.stringify(products));
+        }
+      }
+      if (window.refreshCurrentPageData) {
+        window.refreshCurrentPageData();
+      }
+    }
+
+    handleProductDeleted(payload) {
+      if (payload && payload.id) {
+        let products = JSON.parse(localStorage.getItem('sina_products') || '[]');
+        products = products.filter(p => p.id !== payload.id);
+        localStorage.setItem('sina_products', JSON.stringify(products));
+      }
+      if (window.refreshCurrentPageData) {
+        window.refreshCurrentPageData();
+      }
+    }
+
+    handleCategoryAdded(payload) {
+      if (payload && payload.name) {
+        const categories = JSON.parse(localStorage.getItem('sina_categories') || '[]');
+        if (!categories.some(c => c.id === payload.id || c.name.toLowerCase() === payload.name.toLowerCase())) {
+          categories.push(payload);
+          localStorage.setItem('sina_categories', JSON.stringify(categories));
+        }
+      }
+      if (window.refreshCurrentPageData) {
+        window.refreshCurrentPageData();
       }
     }
 
@@ -170,6 +231,24 @@
       return JSON.parse(localStorage.getItem('sina_categories') || '[]');
     }
 
+    async addCategory(name) {
+      const categories = await this.getCategories();
+      const existing = categories.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
+      if (existing) return existing;
+
+      const newCat = { id: 'c_' + Date.now(), name: name.trim() };
+      categories.push(newCat);
+      localStorage.setItem('sina_categories', JSON.stringify(categories));
+
+      this.supabaseRequest('categories', {
+        method: 'POST',
+        body: JSON.stringify({ name: newCat.name })
+      });
+
+      this.broadcast('CATEGORY_ADDED', newCat);
+      return newCat;
+    }
+
     async getProducts(categoryId = null) {
       let query = 'products?select=*&is_active=eq.true&order=name.asc';
       if (categoryId) query += `&category_id=eq.${categoryId}`;
@@ -182,6 +261,43 @@
         return local.filter(p => p.category_id === categoryId);
       }
       return local;
+    }
+
+    async addProduct(product) {
+      const products = JSON.parse(localStorage.getItem('sina_products') || '[]');
+
+      // If user provided a new category name on the fly
+      let categoryId = product.category_id;
+      if (!categoryId && product.category_name) {
+        const cat = await this.addCategory(product.category_name);
+        categoryId = cat.id;
+      }
+
+      const newProd = {
+        id: 'p_' + Date.now(),
+        category_id: categoryId || 'c1',
+        name: product.name.trim(),
+        type: product.type ? product.type.trim() : 'Standard',
+        default_unit: product.default_unit || 'per_kg',
+        default_rate: parseFloat(product.default_rate) || 0
+      };
+      products.push(newProd);
+      localStorage.setItem('sina_products', JSON.stringify(products));
+
+      // Attempt Supabase insert
+      this.supabaseRequest('products', {
+        method: 'POST',
+        body: JSON.stringify({
+          category_id: newProd.category_id,
+          name: newProd.name,
+          type: newProd.type,
+          default_unit: newProd.default_unit,
+          default_rate: newProd.default_rate
+        })
+      });
+
+      this.broadcast('PRODUCT_ADDED', newProd);
+      return newProd;
     }
 
     // 3. PROCUREMENT ENTRIES (Form submission matching sketch)
@@ -253,8 +369,23 @@
     async getDailyFloat(repId) {
       const today = new Date().toISOString().split('T')[0];
       const floats = JSON.parse(localStorage.getItem('sina_floats') || '[]');
-      const found = floats.find(f => f.representative_id === repId && f.date === today);
-      return found ? found.float_amount : 15000.00; // default initial float
+      
+      // Look for float matching repId today
+      let found = floats.find(f => String(f.representative_id) === String(repId) && f.date === today);
+      
+      // If not found for today, get latest float recorded for this rep
+      if (!found) {
+        const repFloats = floats.filter(f => String(f.representative_id) === String(repId));
+        if (repFloats.length > 0) {
+          found = repFloats[repFloats.length - 1];
+        }
+      }
+
+      // If rep has an assigned float, return it, otherwise return 0 (or default 15000 if rep is default Rahul)
+      if (found) {
+        return parseFloat(found.float_amount) || 0;
+      }
+      return repId === '22222222-2222-2222-2222-222222222222' ? 15000.00 : 0;
     }
 
     async saveExpense(expense) {

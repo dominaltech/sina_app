@@ -25,6 +25,8 @@
     setupPaymentModeTabs();
     setupImageUploader();
     setupFormSubmission();
+    setupQuickAddProduct();
+    checkUrlParams();
   });
 
   async function loadInitialData() {
@@ -33,6 +35,33 @@
     allProducts = await window.sinaDB.getProducts();
 
     populateCategories();
+  }
+
+  function checkUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product_id');
+    if (!productId) return;
+
+    const prod = allProducts.find(p => p.id === productId);
+    if (!prod) return;
+
+    const catSelect = document.getElementById('category_select');
+    if (catSelect && prod.category_id) {
+      catSelect.value = prod.category_id;
+      populateProducts(prod.category_id);
+      const prodSelect = document.getElementById('product_select');
+      if (prodSelect) {
+        prodSelect.value = prod.id;
+      }
+      const rateInput = document.getElementById('rate');
+      if (rateInput && prod.default_rate) {
+        rateInput.value = prod.default_rate;
+      }
+      if (prod.default_unit) {
+        setUnit(prod.default_unit);
+      }
+      recalculateTotal();
+    }
   }
 
   // FIRM AUTO-SUGGEST
@@ -145,9 +174,23 @@
     filtered.forEach(p => {
       prodSelect.innerHTML += `<option value="${p.id}" data-unit="${p.default_unit}" data-rate="${p.default_rate}">${escapeHtml(p.name)} (${escapeHtml(p.type || 'Standard')})</option>`;
     });
+    prodSelect.innerHTML += `<option value="__quick_add__" style="color: var(--purple-primary); font-weight: 700;">+ Add New Product / Commodity...</option>`;
 
     prodSelect.addEventListener('change', () => {
       const selected = prodSelect.options[prodSelect.selectedIndex];
+      if (selected && selected.value === '__quick_add__') {
+        const modal = document.getElementById('add-product-modal');
+        if (modal) {
+          populateModalCategories();
+          const currentCatVal = document.getElementById('category_select')?.value;
+          const catSelect = document.getElementById('modal_prod_category');
+          if (currentCatVal && catSelect) catSelect.value = currentCatVal;
+          modal.classList.add('active');
+        }
+        prodSelect.value = '';
+        return;
+      }
+
       if (selected && selected.value) {
         const rate = selected.getAttribute('data-rate');
         const unit = selected.getAttribute('data-unit');
@@ -160,6 +203,139 @@
         recalculateTotal();
       }
     });
+  }
+
+  function setupQuickAddProduct() {
+    const modal = document.getElementById('add-product-modal');
+    const openBtn = document.getElementById('btn-quick-add-product');
+    const closeBtn = document.getElementById('btn-close-product-modal');
+    const form = document.getElementById('quick-add-product-form');
+    const catSelect = document.getElementById('modal_prod_category');
+    const newCatGroup = document.getElementById('modal_new_cat_group');
+    const newCatInput = document.getElementById('modal_new_cat_name');
+
+    if (!modal) return;
+
+    function openModal() {
+      populateModalCategories();
+      const currentCatVal = document.getElementById('category_select')?.value;
+      if (currentCatVal && catSelect) {
+        catSelect.value = currentCatVal;
+      }
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      if (form) form.reset();
+      if (newCatGroup) newCatGroup.style.display = 'none';
+      if (newCatInput) newCatInput.required = false;
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    if (catSelect) {
+      catSelect.addEventListener('change', () => {
+        if (catSelect.value === '__new__') {
+          newCatGroup.style.display = 'block';
+          newCatInput.required = true;
+          newCatInput.focus();
+        } else {
+          newCatGroup.style.display = 'none';
+          newCatInput.required = false;
+        }
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Adding Product...';
+        }
+
+        try {
+          const categoryVal = catSelect.value;
+          let categoryId = categoryVal;
+          let categoryName = null;
+          if (categoryVal === '__new__') {
+            categoryName = newCatInput.value.trim();
+            if (!categoryName) {
+              alert('Please specify a category name.');
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Product & Select';
+              }
+              return;
+            }
+            categoryId = null;
+          }
+
+          const name = document.getElementById('modal_prod_name').value.trim();
+          const type = document.getElementById('modal_prod_type').value.trim() || 'Standard';
+          const unit = document.getElementById('modal_prod_unit').value;
+          const rate = parseFloat(document.getElementById('modal_prod_rate').value) || 0;
+
+          const newProd = await window.sinaDB.addProduct({
+            category_id: categoryId,
+            category_name: categoryName,
+            name,
+            type,
+            default_unit: unit,
+            default_rate: rate
+          });
+
+          // Refresh categories and products
+          allCategories = await window.sinaDB.getCategories();
+          allProducts = await window.sinaDB.getProducts();
+
+          // Refresh main select elements
+          populateCategories();
+          const mainCatSelect = document.getElementById('category_select');
+          if (mainCatSelect) {
+            mainCatSelect.value = newProd.category_id;
+            populateProducts(newProd.category_id);
+            const mainProdSelect = document.getElementById('product_select');
+            if (mainProdSelect) {
+              mainProdSelect.value = newProd.id;
+            }
+          }
+
+          // Fill rate and unit in form
+          const rateInput = document.getElementById('rate');
+          if (rateInput) rateInput.value = rate;
+          setUnit(unit);
+          recalculateTotal();
+
+          closeModal();
+        } catch (err) {
+          console.error(err);
+          alert('Error adding product: ' + err.message);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Add Product & Select';
+          }
+        }
+      });
+    }
+  }
+
+  function populateModalCategories() {
+    const catSelect = document.getElementById('modal_prod_category');
+    if (!catSelect) return;
+    let html = '<option value="">-- Choose Category --</option>';
+    allCategories.forEach(c => {
+      html += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+    });
+    html += '<option value="__new__">+ Add New Category...</option>';
+    catSelect.innerHTML = html;
   }
 
   // QUANTITY, RATE & UNIT CALCULATIONS

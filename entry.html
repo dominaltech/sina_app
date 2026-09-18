@@ -73,7 +73,10 @@
 
         <!-- Type / Product -->
         <div class="form-group">
-          <label class="form-label" for="product_select">Type / Item <span class="required-star">*</span></label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" for="product_select" style="margin-bottom: 0;">Type / Item <span class="required-star">*</span></label>
+            <button type="button" id="btn-quick-add-product" class="text-purple font-bold" style="background: none; border: none; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">+ Add New Product</button>
+          </div>
           <select id="product_select" class="form-select" required>
             <option value="">-- Select Category First --</option>
           </select>
@@ -169,6 +172,53 @@
       </div>
     </form>
   </main>
+
+  <!-- QUICK ADD PRODUCT MODAL -->
+  <div id="add-product-modal" class="sina-modal-backdrop">
+    <div class="sina-modal-card">
+      <div class="pwa-modal-header">
+        <div class="pwa-badge-purple">New Commodity</div>
+        <button type="button" class="icon-btn" id="btn-close-product-modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--purple-primary); margin-bottom: 14px;">Add New Product</h3>
+      <form id="quick-add-product-form">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="modal_prod_category">Category *</label>
+          <select id="modal_prod_category" class="form-select" required>
+            <option value="">-- Choose Category --</option>
+            <option value="__new__">+ Add New Category...</option>
+          </select>
+        </div>
+        <div class="form-group" id="modal_new_cat_group" style="display: none; margin-bottom: 12px;">
+          <label class="form-label" for="modal_new_cat_name">New Category Name *</label>
+          <input type="text" id="modal_new_cat_name" class="form-input" placeholder="e.g. Fertilizers, Dried Fruits">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="modal_prod_name">Product Name *</label>
+          <input type="text" id="modal_prod_name" class="form-input" placeholder="e.g. Mustard Seed, Soybean" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="modal_prod_type">Type / Variety / Grade</label>
+          <input type="text" id="modal_prod_type" class="form-input" placeholder="e.g. Grade A, Desi, Super">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="modal_prod_unit">Unit of Measure *</label>
+          <select id="modal_prod_unit" class="form-select" required>
+            <option value="per_kg">Per Kg</option>
+            <option value="per_piece">Per Piece</option>
+            <option value="per_bag">Per Bag</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="modal_prod_rate">Default Rate (₹) *</label>
+          <input type="number" id="modal_prod_rate" class="form-input" placeholder="e.g. 45.00" min="0.01" step="any" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Add Product & Select</button>
+      </form>
+    </div>
+  </div>
 
   <!-- Core Scripts -->
   <script src="js/config.js"></script>
