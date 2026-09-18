@@ -39,6 +39,30 @@
     initBroadcast() {
       if ('BroadcastChannel' in window) {
         this.channel = new BroadcastChannel(window.SINA_CONFIG.BROADCAST_CHANNEL);
+        this.channel.onmessage = (event) => {
+          if (event.data && event.data.type === 'SYSTEM_RESET') {
+            this.handleSystemReset();
+          }
+        };
+      }
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'sina_last_event' && e.newValue) {
+          try {
+            const data = JSON.parse(e.newValue);
+            if (data.type === 'SYSTEM_RESET') {
+              this.handleSystemReset();
+            }
+          } catch (err) {}
+        }
+      });
+    }
+
+    handleSystemReset() {
+      if (window.refreshCurrentPageData) {
+        window.refreshCurrentPageData();
+      } else {
+        window.location.reload();
       }
     }
 
