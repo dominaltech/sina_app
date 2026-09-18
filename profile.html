@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Float & Profile - SINA App</title>
+  <meta name="theme-color" content="#4C1D95">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .profile-hero {
+      background: linear-gradient(135deg, var(--purple-dark), var(--purple-primary));
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .profile-avatar-big {
+      width: 64px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .profile-name-txt {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+    .profile-phone-txt {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+    .profile-route-tag {
+      display: inline-block;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .ledger-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border-color);
+      font-size: 0.9rem;
+    }
+    .ledger-row:last-child {
+      border-bottom: none;
+    }
+    .ledger-net {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0 6px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--purple-primary);
+      border-top: 2px solid var(--purple-border);
+      margin-top: 8px;
+    }
+    .expense-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .expense-list-item:last-child {
+      border-bottom: none;
+    }
+    .expense-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .expense-note {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .expense-amount-tag {
+      font-weight: 800;
+      color: var(--danger-color);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <!-- Hero Box -->
+    <div class="profile-hero">
+      <div class="profile-avatar-big">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2 class="profile-name-txt" id="profile-name">Rahul Sharma</h2>
+      <div class="profile-phone-txt" id="profile-phone">+91 9811223344</div>
+      <div class="profile-route-tag" id="profile-route">North Wholesale Market</div>
+    </div>
+
+    <!-- Cash Ledger Card -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 1rem; font-weight: 700;">Daily Cash Ledger</h3>
+        <span class="pwa-badge-purple">Live Balances</span>
+      </div>
+      <div class="ledger-row">
+        <span>Morning Cash Float:</span>
+        <strong id="prof-float">₹15,000</strong>
+      </div>
+      <div class="ledger-row">
+        <span>Procurement Cash Collected:</span>
+        <strong style="color: var(--success-color);" id="prof-cash-col">+ ₹0</strong>
+      </div>
+      <div class="ledger-row">
+        <span>Field Expenses Incurred:</span>
+        <strong style="color: var(--danger-color);" id="prof-expenses">- ₹0</strong>
+      </div>
+      <div class="ledger-net">
+        <span>Net Cash in Hand:</span>
+        <span id="prof-net-cash">₹15,000</span>
+      </div>
+    </div>
+
+    <!-- Today's Field Expenses List -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 1rem; font-weight: 700;">Today's Logged Expenses</h3>
+        <a href="index.html" class="text-purple" style="font-size: 0.8rem; font-weight: 600;">+ Add Expense</a>
+      </div>
+      <div id="profile-expenses-list">
+        <p class="text-muted text-center" style="padding: 12px;">No expenses logged today.</p>
+      </div>
+    </div>
+
+    <!-- Install App / Apple Guide Action -->
+    <div class="card" style="border: 1px dashed var(--purple-border); background: var(--purple-tint);">
+      <h4 style="color: var(--purple-primary); font-size: 0.95rem; margin-bottom: 4px;">Install SINA App</h4>
+      <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 12px;">Get 1-tap home screen access on Android and Apple iPhone.</p>
+      <button class="btn btn-primary btn-block" onclick="triggerPWAInstall()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Install SINA App
+      </button>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button class="btn btn-logout btn-block" onclick="window.sinaAuth.logout()">Logout</button>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const rep = window.sinaAuth.requireAuth();
+      if (!rep) return;
+
+      document.getElementById('profile-name').textContent = rep.name;
+      document.getElementById('profile-phone').textContent = rep.phone;
+      document.getElementById('profile-route').textContent = rep.assigned_route || 'All Market Routes';
+
+      await loadProfileData();
+    });
+
+    window.refreshCurrentPageData = async function() {
+      await loadProfileData();
+    };
+
+    async function loadProfileData() {
+      const rep = window.sinaAuth.getCurrentUser();
+      if (!rep) return;
+
+      const summary = await window.sinaDB.getRepTodaySummary(rep.id);
+      document.getElementById('prof-float').textContent = '₹' + summary.float.toLocaleString('en-IN');
+      document.getElementById('prof-cash-col').textContent = '+ ₹' + summary.cashCollected.toLocaleString('en-IN');
+      document.getElementById('prof-expenses').textContent = '- ₹' + summary.totalExpenses.toLocaleString('en-IN');
+      document.getElementById('prof-net-cash').textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
+
+      const expList = document.getElementById('profile-expenses-list');
+      if (summary.todayExpenses.length === 0) {
+        expList.innerHTML = '<p class="text-muted text-center" style="padding: 12px;">No expenses logged today.</p>';
+      } else {
+        let html = '';
+        summary.todayExpenses.forEach(exp => {
+          html += `
+            <div class="expense-list-item">
+              <div>
+                <div class="expense-title">${exp.category.toUpperCase()}</div>
+                <div class="expense-note">${exp.notes || 'Field operational expense'}</div>
+              </div>
+              <div class="expense-amount-tag">- ₹${exp.amount.toLocaleString('en-IN')}</div>
+            </div>
+          `;
+        });
+        expList.innerHTML = html;
+      }
+    }
+  </script>
+</body>
+</html>

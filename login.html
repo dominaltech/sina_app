@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Representative Login - SINA App</title>
+  <meta name="theme-color" content="#4C1D95">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    body {
+      padding-top: 0;
+      padding-bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+    }
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px 16px;
+    }
+    .login-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+    }
+    .login-brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-logo-box {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--purple-dark), var(--purple-primary));
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 16px var(--purple-shadow);
+    }
+    .login-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .login-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .demo-users-box {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border-color);
+    }
+    .demo-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .quick-user-btn {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.15s;
+    }
+    .quick-user-btn:hover {
+      background: var(--purple-tint);
+      border-color: var(--purple-border);
+      color: var(--purple-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-brand-header">
+        <div class="login-logo-box">SINA</div>
+        <h1 class="login-title">Representative Login</h1>
+        <p class="login-subtitle">Field Operations & Procurement Portal</p>
+      </div>
+
+      <form id="rep-login-form">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="login_phone">Registered Mobile Number</label>
+          <input type="tel" id="login_phone" class="form-input" placeholder="e.g. 9811223344" maxlength="10" required autofocus>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="login_password">Password / PIN</label>
+          <input type="password" id="login_password" class="form-input" placeholder="Enter password (default: rep123)" required>
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">
+          Sign In to SINA App
+        </button>
+      </form>
+
+      <!-- 1-Click Demo Login Helpers -->
+      <div class="demo-users-box">
+        <div class="demo-title">1-Click Demo Login (Active Field Reps)</div>
+        <button type="button" class="quick-user-btn" onclick="fillDemo('9811223344', 'rep123')">
+          <span>Rahul Sharma (North Mandi)</span>
+          <span class="text-purple">Select</span>
+        </button>
+        <button type="button" class="quick-user-btn" onclick="fillDemo('9822334455', 'rep123')">
+          <span>Suresh Kumar (South Zone)</span>
+          <span class="text-purple">Select</span>
+        </button>
+        <button type="button" class="quick-user-btn" onclick="fillDemo('9833445566', 'rep123')">
+          <span>Amit Patel (East Mandi)</span>
+          <span class="text-purple">Select</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    function fillDemo(phone, pass) {
+      document.getElementById('login_phone').value = phone;
+      document.getElementById('login_password').value = pass;
+      document.getElementById('rep-login-form').dispatchEvent(new Event('submit'));
+    }
+
+    document.getElementById('rep-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const phone = document.getElementById('login_phone').value.trim();
+      const pass = document.getElementById('login_password').value.trim();
+      const btn = document.getElementById('btn-login-submit');
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        await window.sinaAuth.login(phone, pass);
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+        btn.textContent = 'Sign In to SINA App';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+/* SINA App - Procurement Entry Form CSS (Matching Sketch) */
+
+.procurement-header {
+  margin-bottom: 20px;
+}
+
+.procurement-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--purple-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.procurement-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Form Section Containers */
+.form-section {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-label-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--purple-primary);
+  background: var(--purple-tint);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.required-star {
+  color: var(--purple-primary);
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  background-color: var(--bg-primary);
+  border-color: var(--purple-primary);
+  box-shadow: 0 0 0 3px var(--purple-shadow);
+}
+
+/* AUTO-SUGGEST DROPDOWN FOR FIRM NAME */
+.autosuggest-wrapper {
+  position: relative;
+}
+
+.autosuggest-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--purple-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 50;
+  margin-top: 4px;
+  display: none;
+}
+
+.autosuggest-dropdown.active {
+  display: block;
+}
+
+.suggest-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.15s;
+}
+
+.suggest-item:last-child {
+  border-bottom: none;
+}
+
+.suggest-item:hover {
+  background-color: var(--purple-tint);
+}
+
+.suggest-firm-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.suggest-firm-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.add-new-firm-item {
+  background: var(--purple-tint);
+  color: var(--purple-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-new-firm-item:hover {
+  background: var(--purple-border);
+}
+
+/* RATE & UNIT SEGMENTED CONTROL */
+.unit-toggle-row {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.unit-btn {
+  flex: 1;
+  padding: 8px 6px;
+  background: transparent;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.unit-btn.active {
+  background: var(--purple-primary);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-sm);
+}
+
+.rate-calc-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--purple-tint);
+  border: 1px dashed var(--purple-border);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-top: 10px;
+}
+
+.calc-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--purple-primary);
+}
+
+.calc-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--purple-dark);
+}
+
+/* PAYMENT MODE SELECTOR (CASH, UPI, BANK TRANSFER) */
+.payment-modes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.payment-mode-tab {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.payment-mode-tab svg {
+  color: inherit;
+}
+
+.payment-mode-tab span {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.payment-mode-tab:hover {
+  border-color: var(--purple-primary);
+}
+
+.payment-mode-tab.active {
+  background: var(--purple-primary);
+  border-color: var(--purple-primary);
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px var(--purple-shadow);
+}
+
+/* MULTI-IMAGE UPLOAD (PASSBOOK, CHEQUE, RECEIPTS) */
+.multi-upload-area {
+  border: 2px dashed var(--purple-border);
+  background: var(--purple-tint);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.multi-upload-area:hover {
+  background: #EDE9FE;
+  border-color: var(--purple-primary);
+}
+
+.upload-icon-wrap {
+  color: var(--purple-primary);
+  margin-bottom: 6px;
+}
+
+.upload-prompt {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--purple-primary);
+}
+
+.upload-subprompt {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.preview-thumbnail-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.preview-thumbnail-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-thumb-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* STICKY SAVE FOOTER */
+.sticky-save-bar {
+  position: fixed;
+  bottom: var(--bottom-nav-height);
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border-color);
+  padding: 12px 16px;
+  z-index: 90;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.sticky-save-bar .btn-save {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: 1.05rem;
+  padding: 14px;
+}

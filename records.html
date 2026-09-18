@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Records & Firms - SINA App</title>
+  <meta name="theme-color" content="#4C1D95">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .records-tabs-bar {
+      display: flex;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .records-tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .records-tab-btn.active {
+      background: var(--bg-primary);
+      color: var(--purple-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .search-field-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .mode-select-wrap {
+      width: 120px;
+    }
+    
+    .record-item-card {
+      border-left: 4px solid var(--purple-primary);
+      margin-bottom: 12px;
+    }
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .record-firm-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .record-date {
+      font-size: 0.75rem;
+    }
+    .record-amount-col {
+      text-align: right;
+    }
+    .record-total {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--purple-dark);
+    }
+    .record-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 12px;
+      background: var(--bg-secondary);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+    }
+    .record-meta-line {
+      display: flex;
+      gap: 4px;
+    }
+    .meta-lbl {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .meta-val {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .payment-ref-badge {
+      display: flex;
+      gap: 12px;
+      background: var(--purple-tint);
+      color: var(--purple-primary);
+      border: 1px solid var(--purple-border);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .attachment-preview-row {
+      margin-top: 10px;
+    }
+    .thumb-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-top: 6px;
+      padding-bottom: 4px;
+    }
+    .strip-thumb {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--purple-border);
+      cursor: pointer;
+    }
+    
+    /* Firms Directory Card */
+    .firm-directory-card {
+      margin-bottom: 10px;
+    }
+    .firm-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .firm-name-txt {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .btn-call-firm {
+      background: var(--purple-tint);
+      color: var(--purple-primary);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .firm-contact-txt {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .firm-address-txt {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <!-- Top Tabs (Orders vs Firms) -->
+    <div class="records-tabs-bar">
+      <button type="button" class="records-tab-btn active" id="tab-btn-entries">Orders History</button>
+      <button type="button" class="records-tab-btn" id="tab-btn-firms">Firms Directory</button>
+    </div>
+
+    <!-- Search and Mode Filter -->
+    <div class="filter-bar">
+      <div class="search-field-wrap">
+        <input type="text" id="records-search-input" class="form-input" placeholder="Search firm, person, or phone...">
+      </div>
+      <div class="mode-select-wrap">
+        <select id="records-mode-filter" class="form-select">
+          <option value="">All Modes</option>
+          <option value="cash">Cash</option>
+          <option value="upi">UPI</option>
+          <option value="bank_transfer">Bank</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 1. Orders View -->
+    <section id="view-entries">
+      <div id="entries-list-container">
+        <div class="card text-center text-muted" style="padding: 24px;">Loading records...</div>
+      </div>
+    </section>
+
+    <!-- 2. Firms View -->
+    <section id="view-firms" style="display: none;">
+      <div id="firms-list-container">
+        <div class="card text-center text-muted" style="padding: 24px;">Loading firms...</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Full-Size Image Viewer Modal -->
+  <div id="full-image-modal" class="sina-modal-backdrop" onclick="closeImageViewer()">
+    <div class="sina-modal-card" style="padding: 12px; text-align: center;" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span class="pwa-badge-purple">Passbook / Cheque Proof</span>
+        <button class="icon-btn" onclick="closeImageViewer()">&times;</button>
+      </div>
+      <img id="full-modal-img" src="" style="width: 100%; max-height: 70vh; object-fit: contain; border-radius: var(--radius-md);" alt="Proof">
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/records.js"></script>
+</body>
+</html>

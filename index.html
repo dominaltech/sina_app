@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dashboard - SINA App</title>
+  <meta name="description" content="SINA App Representative Field Dashboard">
+  <meta name="theme-color" content="#4C1D95">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .dash-greeting-card {
+      background: linear-gradient(135deg, var(--purple-dark), var(--purple-primary));
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-md);
+    }
+    .greeting-date {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+    }
+    .greeting-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 4px 0;
+      color: #FFFFFF;
+    }
+    .greeting-route {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+    
+    /* KPI METRICS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .kpi-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 10px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--purple-primary);
+      margin-top: 4px;
+    }
+    .kpi-lbl {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    /* FLOAT RECONCILIATION CARD */
+    .float-reconcile-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--purple-border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .float-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .float-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .float-math-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.85rem;
+      border-bottom: 1px dashed var(--border-color);
+    }
+    .float-net-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0 4px;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--purple-primary);
+    }
+
+    /* ACTION BUTTONS */
+    .dash-actions-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .dash-actions-row .btn {
+      flex: 1;
+    }
+
+    /* VISIT CARDS */
+    .section-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .visit-card {
+      margin-bottom: 10px;
+      border-left: 4px solid var(--purple-primary);
+    }
+    .visit-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .visit-firm-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .visit-time {
+      font-size: 0.75rem;
+    }
+    .visit-amount-box {
+      text-align: right;
+    }
+    .visit-amount {
+      display: block;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--purple-dark);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+    .badge-success { background: var(--success-bg); color: var(--success-color); }
+    .badge-purple { background: var(--purple-tint); color: var(--purple-primary); border: 1px solid var(--purple-border); }
+    .visit-bottom-row {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-color);
+      padding-top: 6px;
+      margin-top: 6px;
+    }
+    .empty-state-card {
+      padding: 30px 16px;
+      background: var(--bg-primary);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-color);
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <!-- Greeting & Status Card -->
+    <div class="dash-greeting-card">
+      <div class="greeting-date" id="dash-today-date">Today</div>
+      <h2 class="greeting-name" id="dash-rep-name">Rahul Sharma</h2>
+      <div class="greeting-route" id="dash-rep-route">North Wholesale Market</div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="dash-actions-row">
+      <a href="entry.html" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Procurement
+      </a>
+      <button type="button" id="btn-open-expense-modal" class="btn btn-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>
+        Log Expense
+      </button>
+    </div>
+
+    <!-- KPI Metric Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-lbl">Visits</div>
+        <div class="kpi-val" id="kpi-visits-count">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">Procured</div>
+        <div class="kpi-val" id="kpi-total-procurement">₹0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">Cash in Hand</div>
+        <div class="kpi-val" id="kpi-cash-in-hand">₹15,000</div>
+      </div>
+    </div>
+
+    <!-- Daily Float & Expenses Summary -->
+    <div class="float-reconcile-card">
+      <div class="float-header">
+        <span class="float-title">Today's Cash Ledger</span>
+        <span class="badge badge-purple">Real-Time</span>
+      </div>
+      <div class="float-math-row">
+        <span>Morning Cash Float:</span>
+        <strong id="float-initial-amount">₹15,000</strong>
+      </div>
+      <div class="float-math-row">
+        <span>Cash Collected:</span>
+        <strong style="color: var(--success-color);" id="float-cash-collected">+ ₹0</strong>
+      </div>
+      <div class="float-math-row">
+        <span>Field Expenses:</span>
+        <strong style="color: var(--danger-color);" id="float-total-expenses">- ₹0</strong>
+      </div>
+      <div class="float-net-row">
+        <span>Net Cash in Hand:</span>
+        <span id="kpi-cash-in-hand-2">₹15,000</span>
+      </div>
+    </div>
+
+    <!-- Recent Visits Feed -->
+    <div class="section-title-row">
+      <h3 class="section-title">Today's Visits</h3>
+      <a href="records.html" class="text-purple" style="font-size: 0.85rem; font-weight: 600;">View All</a>
+    </div>
+    <div id="recent-visits-list">
+      <div class="empty-state-card text-center">
+        <p class="text-muted">Loading today's activity...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- LOG EXPENSE MODAL -->
+  <div id="expense-modal" class="sina-modal-backdrop">
+    <div class="sina-modal-card">
+      <div class="pwa-modal-header">
+        <div class="pwa-badge-purple">Field Expense</div>
+        <button class="icon-btn" id="btn-close-expense-modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="expense-form">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="expense_amount">Expense Amount (₹) *</label>
+          <input type="number" id="expense_amount" class="form-input" placeholder="e.g. 250" min="1" step="any" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="expense_category">Category *</label>
+          <select id="expense_category" class="form-select" required>
+            <option value="fuel">Fuel / Petrol</option>
+            <option value="food">Food & Refreshments</option>
+            <option value="travel">Bus / Auto / Toll</option>
+            <option value="vehicle_maintenance">Vehicle Repair</option>
+            <option value="misc">Miscellaneous</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="expense_notes">Notes / Details</label>
+          <input type="text" id="expense_notes" class="form-input" placeholder="e.g. Petrol for bike at Shell pump">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save Expense</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
