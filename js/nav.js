@@ -35,6 +35,29 @@
         </div>
       </div>
       <div class="top-bar-right">
+        <!-- Language Selector (English, Hindi, Marathi) -->
+        <div class="lang-selector-wrap" id="lang-selector-container">
+          <button type="button" id="lang-menu-btn" class="lang-pill-btn" aria-label="Select Language">
+            ${icons.get('globe', { size: 14 })}
+            <span id="current-lang-label">EN</span>
+            ${icons.get('chevronDown', { size: 12 })}
+          </button>
+          <div class="lang-dropdown-menu" id="lang-dropdown-menu">
+            <div class="lang-option" data-lang="en">
+              <span class="lang-name">English</span>
+              <span class="lang-code">EN</span>
+            </div>
+            <div class="lang-option" data-lang="hi">
+              <span class="lang-name">हिन्दी (Hindi)</span>
+              <span class="lang-code">HI</span>
+            </div>
+            <div class="lang-option" data-lang="mr">
+              <span class="lang-name">मराठी (Marathi)</span>
+              <span class="lang-code">MR</span>
+            </div>
+          </div>
+        </div>
+
         <div class="network-badge ${navigator.onLine ? 'online' : 'offline'}" id="network-status-indicator">
           <span class="dot"></span>
           <span class="status-label">${navigator.onLine ? 'Live' : 'Offline'}</span>
@@ -99,6 +122,16 @@
         </nav>
 
         <div class="drawer-footer">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 8px 4px; border-bottom: 1px solid var(--border-color);">
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+              ${icons.get('globe', { size: 16 })} Language / भाषा
+            </span>
+            <div style="display: flex; gap: 5px;">
+              <button type="button" class="drawer-lang-btn" data-drawer-lang="en">EN</button>
+              <button type="button" class="drawer-lang-btn" data-drawer-lang="hi">हिन्दी</button>
+              <button type="button" class="drawer-lang-btn" data-drawer-lang="mr">मराठी</button>
+            </div>
+          </div>
           <button class="btn btn-outline-purple btn-block install-drawer-btn" onclick="triggerPWAInstall()">
             ${icons.get('download', { size: 18 })} Install SINA App
           </button>
@@ -176,6 +209,78 @@
     // Network status updates
     window.addEventListener('online', () => updateNetworkStatus(true));
     window.addEventListener('offline', () => updateNetworkStatus(false));
+
+    // LANGUAGE SELECTOR LOGIC
+    setupLanguageEvents();
+  }
+
+  function setupLanguageEvents() {
+    const langBtn = document.getElementById('lang-menu-btn');
+    const langMenu = document.getElementById('lang-dropdown-menu');
+
+    if (langBtn && langMenu) {
+      langBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        langMenu.classList.toggle('active');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!langMenu.contains(e.target) && !langBtn.contains(e.target)) {
+          langMenu.classList.remove('active');
+        }
+      });
+
+      langMenu.querySelectorAll('.lang-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          const lang = opt.getAttribute('data-lang');
+          if (window.sinaTranslate) {
+            window.sinaTranslate.setLanguage(lang);
+          }
+          langMenu.classList.remove('active');
+          syncLanguageUI(lang);
+        });
+      });
+    }
+
+    document.querySelectorAll('.drawer-lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-drawer-lang');
+        if (window.sinaTranslate) {
+          window.sinaTranslate.setLanguage(lang);
+        }
+        syncLanguageUI(lang);
+      });
+    });
+
+    // Initial language UI sync
+    const currentLang = localStorage.getItem('sina_app_language') || 'en';
+    syncLanguageUI(currentLang);
+  }
+
+  function syncLanguageUI(lang) {
+    const label = document.getElementById('current-lang-label');
+    if (label) {
+      label.textContent = lang.toUpperCase();
+    }
+
+    const menu = document.getElementById('lang-dropdown-menu');
+    if (menu) {
+      menu.querySelectorAll('.lang-option').forEach(opt => {
+        if (opt.getAttribute('data-lang') === lang) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+    }
+
+    document.querySelectorAll('.drawer-lang-btn').forEach(btn => {
+      if (btn.getAttribute('data-drawer-lang') === lang) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   function updateNetworkStatus(online) {
