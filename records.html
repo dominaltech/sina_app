@@ -198,6 +198,103 @@
     </section>
   </main>
 
+  <!-- EDIT PURCHASE ENTRY MODAL -->
+  <div id="edit-entry-modal" class="sina-modal-backdrop">
+    <div class="sina-modal-card" style="max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--purple-primary);">Edit Purchase Entry</h3>
+        <button class="icon-btn" id="btn-close-edit-entry" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="edit-entry-form" autocomplete="off">
+        <input type="hidden" id="edit_entry_id">
+
+        <!-- 1. Firm Details -->
+        <div style="font-weight: 700; font-size: 0.85rem; color: var(--purple-primary); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+          1. Shop & Firm Details
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="edit_entry_firm_name">Firm Name *</label>
+          <input type="text" id="edit_entry_firm_name" class="form-input" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="edit_entry_contact">Contact Person *</label>
+          <input type="text" id="edit_entry_contact" class="form-input" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="edit_entry_mobile">Mobile Number *</label>
+          <input type="tel" id="edit_entry_mobile" class="form-input" maxlength="10" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="edit_entry_address">Address / Mandi Location *</label>
+          <input type="text" id="edit_entry_address" class="form-input" required>
+        </div>
+
+        <!-- 2. Product & Quantity Details -->
+        <div style="font-weight: 700; font-size: 0.85rem; color: var(--purple-primary); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+          2. Product & Rate Details
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="edit_entry_product">Product / Commodity Name *</label>
+          <input type="text" id="edit_entry_product" class="form-input" placeholder="e.g. Mustard Seed, Basmati Rice" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-group">
+            <label class="form-label" for="edit_entry_qty">Quantity *</label>
+            <input type="number" id="edit_entry_qty" class="form-input" min="0.01" step="any" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_entry_unit">Unit *</label>
+            <select id="edit_entry_unit" class="form-select" required>
+              <option value="per_kg">Per Kg</option>
+              <option value="per_piece">Per Piece</option>
+              <option value="per_bag">Per Bag</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" for="edit_entry_rate">Rate (₹) *</label>
+            <input type="number" id="edit_entry_rate" class="form-input" min="0.01" step="any" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_entry_total">Total Amount (₹) *</label>
+            <input type="number" id="edit_entry_total" class="form-input" min="0.01" step="any" required>
+          </div>
+        </div>
+
+        <!-- 3. Payment Mode -->
+        <div style="font-weight: 700; font-size: 0.85rem; color: var(--purple-primary); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+          3. Payment Mode
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="edit_entry_mode">Payment Mode *</label>
+          <select id="edit_entry_mode" class="form-select" required>
+            <option value="cash">1. Cash</option>
+            <option value="upi">2. UPI</option>
+            <option value="bank_transfer">3. Bank Transfer</option>
+          </select>
+        </div>
+        <div id="edit_upi_fields" style="display: none; margin-bottom: 10px;">
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="form-label" for="edit_entry_upi_id">UPI ID</label>
+            <input type="text" id="edit_entry_upi_id" class="form-input" placeholder="e.g. store@upi">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_entry_upi_utr">UPI UTR / Reference</label>
+            <input type="text" id="edit_entry_upi_utr" class="form-input" placeholder="12-digit UTR">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 16px;">
+          Save Changes to Supabase
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Full-Size Image Viewer Modal -->
   <div id="full-image-modal" class="sina-modal-backdrop" onclick="closeImageViewer()">
     <div class="sina-modal-card" style="padding: 12px; text-align: center;" onclick="event.stopPropagation()">

@@ -94,6 +94,13 @@
       'Use in Entry': 'प्रविष्टि में उपयोग',
       
       // Common Actions
+      'Edit': 'संपादित करें',
+      'Edit Entry': 'प्रविष्टि संपादित करें',
+      'Edit Commodity / Product': 'वस्तु / उत्पाद संपादित करें',
+      'Edit Purchase Entry': 'खरीद प्रविष्टि संपादित करें',
+      'Save Changes': 'परिवर्तन सुरक्षित करें',
+      'Save Changes to Supabase': 'परिवर्तन सुरक्षित करें',
+      'Use': 'उपयोग करें',
       'Save': 'सुरक्षित करें',
       'Cancel': 'रद्द करें',
       'Close': 'बंद करें',
@@ -182,6 +189,13 @@
       'Use in Entry': 'नोंदवहीत वापरा',
       
       // Common Actions
+      'Edit': 'संपादित करा',
+      'Edit Entry': 'नोंद संपादित करा',
+      'Edit Commodity / Product': 'माल / उत्पादन संपादित करा',
+      'Edit Purchase Entry': 'खरेदी नोंद संपादित करा',
+      'Save Changes': 'बदल सेव्ह करा',
+      'Save Changes to Supabase': 'बदल सेव्ह करा',
+      'Use': 'वापरा',
       'Save': 'जतन करा',
       'Cancel': 'रद्द करा',
       'Close': 'बंद करा',

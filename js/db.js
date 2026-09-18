@@ -302,6 +302,47 @@
       return newProd;
     }
 
+    async updateProduct(productId, updates) {
+      let categoryId = updates.category_id;
+      if (!categoryId && updates.category_name) {
+        const cat = await this.addCategory(updates.category_name);
+        categoryId = cat.id;
+      }
+
+      const dbPayload = {
+        name: updates.name.trim(),
+        type: updates.type ? updates.type.trim() : 'Standard',
+        default_unit: updates.default_unit || 'per_kg',
+        default_rate: parseFloat(updates.default_rate) || 0,
+        updated_at: new Date().toISOString()
+      };
+      if (categoryId && categoryId.length === 36) {
+        dbPayload.category_id = categoryId;
+      }
+
+      if (productId && productId.length === 36) {
+        await this.supabaseRequest(`products?id=eq.${productId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(dbPayload)
+        });
+      }
+
+      const products = JSON.parse(localStorage.getItem('sina_products') || '[]');
+      const idx = products.findIndex(p => p.id === productId || p.name.toLowerCase() === updates.name.trim().toLowerCase());
+      let updatedProd = null;
+      if (idx !== -1) {
+        products[idx] = { ...products[idx], ...dbPayload, category_id: categoryId || products[idx].category_id };
+        updatedProd = products[idx];
+      } else {
+        updatedProd = { id: productId, ...dbPayload, category_id: categoryId };
+        products.push(updatedProd);
+      }
+      localStorage.setItem('sina_products', JSON.stringify(products));
+
+      this.broadcast('PRODUCT_UPDATED', updatedProd);
+      return updatedProd;
+    }
+
     normalizeEntry(row) {
       const firstItem = (row.procurement_items && row.procurement_items.length > 0) ? row.procurement_items[0] : null;
       const images = (row.payment_attachments && Array.isArray(row.payment_attachments))
@@ -437,6 +478,94 @@
       // Broadcast instant notification to Admin app / windows
       this.broadcast('NEW_PROCUREMENT_ENTRY', newEntry);
       return newEntry;
+    }
+
+    async updateProcurementEntry(entryId, updatedData) {
+      const qty = parseFloat(updatedData.quantity) || 0;
+      const rate = parseFloat(updatedData.rate) || 0;
+      const totalAmount = parseFloat(updatedData.total_amount) || (qty * rate);
+      const isCash = updatedData.payment_mode === 'cash';
+      const cashAmount = isCash ? totalAmount : 0;
+
+      const headerPayload = {
+        firm_name: updatedData.firm_name.trim(),
+        contact_person: updatedData.contact_person.trim(),
+        mobile: updatedData.mobile.trim(),
+        address: updatedData.address.trim(),
+        total_amount: totalAmount,
+        payment_mode: updatedData.payment_mode,
+        cash_amount: cashAmount,
+        upi_id: updatedData.upi_id ? updatedData.upi_id.trim() : null,
+        upi_utr: updatedData.upi_utr ? updatedData.upi_utr.trim() : null,
+        updated_at: new Date().toISOString()
+      };
+
+      const itemPayload = {
+        category_name: updatedData.category_name ? updatedData.category_name.trim() : 'General',
+        product_name: updatedData.type ? updatedData.type.trim() : (updatedData.product_name ? updatedData.product_name.trim() : 'Goods'),
+        unit: updatedData.unit || 'per_kg',
+        quantity: qty,
+        rate: rate,
+        line_total: totalAmount
+      };
+
+      // 1. Supabase PATCH updates
+      if (entryId && entryId.length === 36) {
+        await this.supabaseRequest(`procurement_entries?id=eq.${entryId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(headerPayload)
+        });
+
+        await this.supabaseRequest(`procurement_items?entry_id=eq.${entryId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(itemPayload)
+        });
+      }
+
+      // 2. Local storage cache update
+      const entries = JSON.parse(localStorage.getItem('sina_entries') || '[]');
+      const idx = entries.findIndex(e => e.id === entryId);
+      let updatedEntry = null;
+      if (idx !== -1) {
+        entries[idx] = {
+          ...entries[idx],
+          ...headerPayload,
+          category_name: itemPayload.category_name,
+          type: itemPayload.product_name,
+          unit: itemPayload.unit,
+          quantity: itemPayload.quantity,
+          rate: itemPayload.rate,
+          total_amount: totalAmount,
+          cash_amount: cashAmount
+        };
+        updatedEntry = entries[idx];
+      } else {
+        updatedEntry = {
+          id: entryId,
+          ...headerPayload,
+          category_name: itemPayload.category_name,
+          type: itemPayload.product_name,
+          unit: itemPayload.unit,
+          quantity: itemPayload.quantity,
+          rate: itemPayload.rate,
+          created_at: new Date().toISOString()
+        };
+        entries.unshift(updatedEntry);
+      }
+      localStorage.setItem('sina_entries', JSON.stringify(entries));
+
+      // Also update saved firm directory if matching
+      const firms = JSON.parse(localStorage.getItem('sina_firms') || '[]');
+      const firmIdx = firms.findIndex(f => f.firm_name.toLowerCase() === updatedData.firm_name.trim().toLowerCase());
+      if (firmIdx !== -1) {
+        firms[firmIdx].contact_person = updatedData.contact_person.trim();
+        firms[firmIdx].mobile = updatedData.mobile.trim();
+        firms[firmIdx].address = updatedData.address.trim();
+        localStorage.setItem('sina_firms', JSON.stringify(firms));
+      }
+
+      this.broadcast('ENTRY_UPDATED', updatedEntry);
+      return updatedEntry;
     }
 
     async getEntries(repId = null) {

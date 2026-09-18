@@ -10,6 +10,7 @@
 
     setupTabs();
     setupSearch();
+    setupEditEntryModal();
     await loadData();
   });
 
@@ -148,6 +149,13 @@
               </div>
             </div>
           ` : ''}
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+            <button type="button" class="btn btn-outline-purple btn-sm" onclick="openEditEntryModal('${entry.id}')" style="padding: 5px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Entry
+            </button>
+          </div>
         </div>
       `;
     });
@@ -203,6 +211,128 @@
     const viewer = document.getElementById('full-image-modal');
     if (viewer) viewer.classList.remove('active');
   };
+
+  window.openEditEntryModal = function(entryId) {
+    const entry = allEntries.find(e => e.id === entryId);
+    if (!entry) return;
+
+    const modal = document.getElementById('edit-entry-modal');
+    if (!modal) return;
+
+    document.getElementById('edit_entry_id').value = entry.id;
+    document.getElementById('edit_entry_firm_name').value = entry.firm_name || '';
+    document.getElementById('edit_entry_contact').value = entry.contact_person || '';
+    document.getElementById('edit_entry_mobile').value = entry.mobile || '';
+    document.getElementById('edit_entry_address').value = entry.address || '';
+    document.getElementById('edit_entry_product').value = entry.type || entry.product_name || 'Goods';
+    document.getElementById('edit_entry_qty').value = entry.quantity || 1;
+    document.getElementById('edit_entry_unit').value = entry.unit || 'per_kg';
+    document.getElementById('edit_entry_rate').value = entry.rate || 0;
+    document.getElementById('edit_entry_total').value = entry.total_amount || 0;
+    
+    const modeSelect = document.getElementById('edit_entry_mode');
+    if (modeSelect) {
+      modeSelect.value = entry.payment_mode || 'cash';
+    }
+
+    const upiFields = document.getElementById('edit_upi_fields');
+    if (upiFields) {
+      upiFields.style.display = entry.payment_mode === 'upi' ? 'block' : 'none';
+      document.getElementById('edit_entry_upi_id').value = entry.upi_id || '';
+      document.getElementById('edit_entry_upi_utr').value = entry.upi_utr || '';
+    }
+
+    modal.classList.add('active');
+  };
+
+  function setupEditEntryModal() {
+    const modal = document.getElementById('edit-entry-modal');
+    const closeBtn = document.getElementById('btn-close-edit-entry');
+    const form = document.getElementById('edit-entry-form');
+    const modeSelect = document.getElementById('edit_entry_mode');
+    const upiFields = document.getElementById('edit_upi_fields');
+    const qtyInput = document.getElementById('edit_entry_qty');
+    const rateInput = document.getElementById('edit_entry_rate');
+    const totalInput = document.getElementById('edit_entry_total');
+
+    if (!modal) return;
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+    }
+
+    if (modeSelect && upiFields) {
+      modeSelect.addEventListener('change', () => {
+        upiFields.style.display = modeSelect.value === 'upi' ? 'block' : 'none';
+      });
+    }
+
+    function recalcTotal() {
+      const q = parseFloat(qtyInput?.value) || 0;
+      const r = parseFloat(rateInput?.value) || 0;
+      if (totalInput) {
+        totalInput.value = (q * r).toFixed(2);
+      }
+    }
+
+    if (qtyInput) qtyInput.addEventListener('input', recalcTotal);
+    if (rateInput) rateInput.addEventListener('input', recalcTotal);
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving Changes...';
+        }
+
+        try {
+          const entryId = document.getElementById('edit_entry_id').value;
+          const firmName = document.getElementById('edit_entry_firm_name').value.trim();
+          const contact = document.getElementById('edit_entry_contact').value.trim();
+          const mobile = document.getElementById('edit_entry_mobile').value.trim();
+          const address = document.getElementById('edit_entry_address').value.trim();
+          const product = document.getElementById('edit_entry_product').value.trim();
+          const quantity = parseFloat(document.getElementById('edit_entry_qty').value) || 0;
+          const unit = document.getElementById('edit_entry_unit').value;
+          const rate = parseFloat(document.getElementById('edit_entry_rate').value) || 0;
+          const totalAmount = parseFloat(document.getElementById('edit_entry_total').value) || (quantity * rate);
+          const paymentMode = document.getElementById('edit_entry_mode').value;
+          const upiId = document.getElementById('edit_entry_upi_id')?.value.trim();
+          const upiUtr = document.getElementById('edit_entry_upi_utr')?.value.trim();
+
+          await window.sinaDB.updateProcurementEntry(entryId, {
+            firm_name: firmName,
+            contact_person: contact,
+            mobile: mobile,
+            address: address,
+            type: product,
+            product_name: product,
+            quantity: quantity,
+            unit: unit,
+            rate: rate,
+            total_amount: totalAmount,
+            payment_mode: paymentMode,
+            upi_id: upiId,
+            upi_utr: upiUtr
+          });
+
+          modal.classList.remove('active');
+          await loadData();
+          alert(`Success! Purchase entry for "${firmName}" has been updated.`);
+        } catch (err) {
+          console.error(err);
+          alert('Error updating entry: ' + err.message);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes to Supabase';
+          }
+        }
+      });
+    }
+  }
 
   function escapeHtml(str) {
     if (!str) return '';

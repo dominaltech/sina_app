@@ -12,6 +12,7 @@
     await loadCatalogData();
     setupFilters();
     setupAddProductModal();
+    setupEditProductModal();
     setupInlineAddProduct();
   });
 
@@ -107,9 +108,14 @@
           <div class="product-rate-col">
             <div class="rate-amount">₹ ${rateNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div class="rate-unit">${unitLabel}</div>
-            <a href="entry.html?product_id=${prod.id}" class="btn-use-entry">
-              Use in Entry &rarr;
-            </a>
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openEditProductModal('${prod.id}')" style="padding: 4px 10px; font-size: 0.75rem;">
+                Edit
+              </button>
+              <a href="entry.html?product_id=${prod.id}" class="btn-use-entry" style="margin-top: 0; padding: 4px 10px; font-size: 0.75rem;">
+                Use &rarr;
+              </a>
+            </div>
           </div>
         </div>
       `;
@@ -222,6 +228,81 @@
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Save to Catalog';
+          }
+        }
+      });
+    }
+  }
+
+  window.openEditProductModal = function(productId) {
+    const prod = allProducts.find(p => p.id === productId);
+    if (!prod) return;
+
+    const modal = document.getElementById('edit-product-modal');
+    const catSelect = document.getElementById('edit_prod_category');
+    if (!modal || !catSelect) return;
+
+    let catHtml = '';
+    allCategories.forEach(c => {
+      const isSelected = c.id === prod.category_id;
+      catHtml += `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name)}</option>`;
+    });
+    catSelect.innerHTML = catHtml;
+
+    document.getElementById('edit_prod_id').value = prod.id;
+    document.getElementById('edit_prod_name').value = prod.name;
+    document.getElementById('edit_prod_type').value = prod.type || '';
+    document.getElementById('edit_prod_unit').value = prod.default_unit || 'per_kg';
+    document.getElementById('edit_prod_rate').value = parseFloat(prod.default_rate || 0);
+
+    modal.classList.add('active');
+  };
+
+  function setupEditProductModal() {
+    const modal = document.getElementById('edit-product-modal');
+    const closeBtn = document.getElementById('btn-close-edit-prod-modal');
+    const form = document.getElementById('edit-product-form');
+
+    if (!modal) return;
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Saving Changes...';
+        }
+
+        try {
+          const productId = document.getElementById('edit_prod_id').value;
+          const categoryId = document.getElementById('edit_prod_category').value;
+          const name = document.getElementById('edit_prod_name').value.trim();
+          const type = document.getElementById('edit_prod_type').value.trim() || 'Standard';
+          const unit = document.getElementById('edit_prod_unit').value;
+          const rate = parseFloat(document.getElementById('edit_prod_rate').value) || 0;
+
+          await window.sinaDB.updateProduct(productId, {
+            category_id: categoryId,
+            name,
+            type,
+            default_unit: unit,
+            default_rate: rate
+          });
+
+          modal.classList.remove('active');
+          await loadCatalogData();
+          alert(`Success! "${name}" has been updated.`);
+        } catch (err) {
+          alert('Error updating product: ' + err.message);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
           }
         }
       });

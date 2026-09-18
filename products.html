@@ -300,6 +300,48 @@
     </div>
   </div>
 
+  <!-- EDIT PRODUCT MODAL -->
+  <div id="edit-product-modal" class="sina-modal-backdrop">
+    <div class="sina-modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--purple-primary);">Edit Commodity / Product</h3>
+        <button class="icon-btn" id="btn-close-edit-prod-modal" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="edit-product-form">
+        <input type="hidden" id="edit_prod_id">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="edit_prod_category">Category *</label>
+          <select id="edit_prod_category" class="form-select" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="edit_prod_name">Product / Commodity Name *</label>
+          <input type="text" id="edit_prod_name" class="form-input" placeholder="e.g. Basmati Rice, Mustard Seed" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="edit_prod_type">Type / Variety / Grade</label>
+          <input type="text" id="edit_prod_type" class="form-input" placeholder="e.g. Super 1121, Grade A, Desi">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="edit_prod_unit">Unit of Measure *</label>
+          <select id="edit_prod_unit" class="form-select" required>
+            <option value="per_kg">Per Kg</option>
+            <option value="per_piece">Per Piece</option>
+            <option value="per_bag">Per Bag</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="edit_prod_rate">Rate / Amount (₹) *</label>
+          <input type="number" id="edit_prod_rate" class="form-input" placeholder="e.g. 45.00" min="0.01" step="any" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Core Scripts -->
   <script src="js/config.js"></script>
   <script src="js/icons.js"></script>
