@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>New Procurement Entry - SINA App</title>
-  <meta name="description" content="SINA App Field Procurement and Order Entry Form">
+  <title>New Purchase Entry - SINA App</title>
+  <meta name="description" content="SINA App Field Purchases and Goods Bought Entry Form">
   <meta name="theme-color" content="#4C1D95">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/base.css">
@@ -15,9 +15,9 @@
 
   <main class="container">
     <div class="procurement-header">
-      <div class="section-label-tag">Field Procurement Entry</div>
-      <h1 class="procurement-title">Procurement Form</h1>
-      <p class="procurement-subtitle">Enter firm details, goods taken, and payment mode below.</p>
+      <div class="section-label-tag">Purchase Entry / Goods Bought</div>
+      <h1 class="procurement-title">Goods Purchase Form</h1>
+      <p class="procurement-subtitle">Enter firm details, goods bought, and payment mode below.</p>
     </div>
 
     <form id="sina-procurement-form" autocomplete="off">
@@ -63,23 +63,25 @@
       <section class="form-section">
         <div class="section-label-tag">2. Goods & Quantity Details</div>
 
-        <!-- Category -->
-        <div class="form-group">
-          <label class="form-label" for="category_select">Category <span class="required-star">*</span></label>
-          <select id="category_select" class="form-select" required>
-            <option value="">Loading categories...</option>
-          </select>
+        <!-- Category with Auto-suggest -->
+        <div class="form-group autosuggest-wrapper">
+          <label class="form-label" for="category_input">
+            Category <span class="required-star">*</span>
+          </label>
+          <input type="text" id="category_input" class="form-input" placeholder="Type or select category..." required autocomplete="off">
+          <div id="category-autosuggest-dropdown" class="autosuggest-dropdown"></div>
+          <input type="hidden" id="category_id_hidden">
         </div>
 
-        <!-- Type / Product -->
-        <div class="form-group">
+        <!-- Type / Product with Auto-suggest -->
+        <div class="form-group autosuggest-wrapper">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label class="form-label" for="product_select" style="margin-bottom: 0;">Type / Item <span class="required-star">*</span></label>
+            <label class="form-label" for="product_input" style="margin-bottom: 0;">Type / Item <span class="required-star">*</span></label>
             <button type="button" id="btn-quick-add-product" class="text-purple font-bold" style="background: none; border: none; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">+ Add New Product</button>
           </div>
-          <select id="product_select" class="form-select" required>
-            <option value="">-- Select Category First --</option>
-          </select>
+          <input type="text" id="product_input" class="form-input" placeholder="Type or select item/product..." required autocomplete="off">
+          <div id="product-autosuggest-dropdown" class="autosuggest-dropdown"></div>
+          <input type="hidden" id="product_id_hidden">
         </div>
 
         <!-- Quantity -->
@@ -167,7 +169,7 @@
       <div class="sticky-save-bar">
         <button type="submit" id="save-entry-submit-btn" class="btn btn-primary btn-save">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Save Procurement Entry
+          Save Purchase Entry
         </button>
       </div>
     </form>

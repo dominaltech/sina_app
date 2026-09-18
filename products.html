@@ -184,6 +184,58 @@
       </button>
     </div>
 
+    <!-- Dedicated Add Product Section -->
+    <div class="card" id="inline-add-product-card" style="margin-bottom: 16px; border: 1.5px solid var(--purple-border); background: var(--bg-primary); padding: 14px 16px; border-radius: var(--radius-md);">
+      <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="toggle-inline-add-prod">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--purple-tint); color: var(--purple-primary); display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.92rem; color: var(--purple-primary);">+ Add New Commodity / Product</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Register a new crop, seed, or item quickly</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-toggle-add-inline" style="padding: 6px 12px; font-size: 0.78rem;">
+          Open Form
+        </button>
+      </div>
+      <form id="inline-add-product-form" style="display: none; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label class="form-label" style="font-size: 0.78rem;">Category *</label>
+            <input type="text" id="inline_prod_category" class="form-input" placeholder="e.g. Grains, Spices" required style="padding: 8px 10px; font-size: 0.85rem;">
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.78rem;">Product Name *</label>
+            <input type="text" id="inline_prod_name" class="form-input" placeholder="e.g. Mustard Seed" required style="padding: 8px 10px; font-size: 0.85rem;">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label class="form-label" style="font-size: 0.78rem;">Variety / Grade</label>
+            <input type="text" id="inline_prod_type" class="form-input" placeholder="Standard" style="padding: 8px 10px; font-size: 0.85rem;">
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.78rem;">Unit *</label>
+            <select id="inline_prod_unit" class="form-select" required style="padding: 8px 10px; font-size: 0.85rem;">
+              <option value="per_kg">Per Kg</option>
+              <option value="per_piece">Per Piece</option>
+              <option value="per_bag">Per Bag</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.78rem;">Default Rate (₹) *</label>
+            <input type="number" id="inline_prod_rate" class="form-input" placeholder="0.00" min="0.01" step="any" required style="padding: 8px 10px; font-size: 0.85rem;">
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-inline-add">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save to Catalog</button>
+        </div>
+      </form>
+    </div>
+
     <!-- Search Input -->
     <div class="search-box-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

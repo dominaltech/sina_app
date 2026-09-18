@@ -33,6 +33,7 @@
     // Update KPI cards
     const visitsCountEl = document.getElementById('kpi-visits-count');
     const totalProcurementEl = document.getElementById('kpi-total-procurement');
+    const expensesCountEl = document.getElementById('kpi-expenses-count');
     const cashInHandEl = document.getElementById('kpi-cash-in-hand');
     const floatAmountEl = document.getElementById('float-initial-amount');
     const cashCollectedEl = document.getElementById('float-cash-collected');
@@ -40,6 +41,7 @@
 
     if (visitsCountEl) visitsCountEl.textContent = summary.visitsCount;
     if (totalProcurementEl) totalProcurementEl.textContent = '₹' + summary.totalProcurementAmount.toLocaleString('en-IN');
+    if (expensesCountEl) expensesCountEl.textContent = '₹' + summary.totalExpenses.toLocaleString('en-IN');
     if (cashInHandEl) cashInHandEl.textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
     const cashInHand2El = document.getElementById('kpi-cash-in-hand-2');
     if (cashInHand2El) cashInHand2El.textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
@@ -83,7 +85,10 @@
             </div>
           </div>
           <div class="visit-bottom-row">
-            <span class="visit-contact">👤 ${escapeHtml(entry.contact_person)} (${escapeHtml(entry.mobile)})</span>
+            <span class="visit-contact" style="display: flex; align-items: center; gap: 4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ${escapeHtml(entry.contact_person)} (${escapeHtml(entry.mobile)})
+            </span>
           </div>
         </div>
       `;

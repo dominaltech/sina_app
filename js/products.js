@@ -12,6 +12,7 @@
     await loadCatalogData();
     setupFilters();
     setupAddProductModal();
+    setupInlineAddProduct();
   });
 
   // Global refresh hook for real-time updates
@@ -225,6 +226,83 @@
         }
       });
     }
+  }
+
+  function setupInlineAddProduct() {
+    const toggleHeader = document.getElementById('toggle-inline-add-prod');
+    const toggleBtn = document.getElementById('btn-toggle-add-inline');
+    const form = document.getElementById('inline-add-product-form');
+    const cancelBtn = document.getElementById('btn-cancel-inline-add');
+
+    if (!form) return;
+
+    function toggleForm() {
+      const isHidden = form.style.display === 'none' || !form.style.display;
+      form.style.display = isHidden ? 'block' : 'none';
+      if (toggleBtn) {
+        toggleBtn.textContent = isHidden ? 'Close Form' : 'Open Form';
+      }
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleForm();
+      });
+    }
+
+    if (toggleHeader) {
+      toggleHeader.addEventListener('click', () => {
+        toggleForm();
+      });
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        form.reset();
+        form.style.display = 'none';
+        if (toggleBtn) toggleBtn.textContent = 'Open Form';
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const catName = document.getElementById('inline_prod_category').value.trim();
+        const prodName = document.getElementById('inline_prod_name').value.trim();
+        const prodType = document.getElementById('inline_prod_type').value.trim() || 'Standard';
+        const prodUnit = document.getElementById('inline_prod_unit').value;
+        const prodRate = parseFloat(document.getElementById('inline_prod_rate').value) || 0;
+
+        await window.sinaDB.addProduct({
+          category_name: catName,
+          name: prodName,
+          type: prodType,
+          default_unit: prodUnit,
+          default_rate: prodRate
+        });
+
+        form.reset();
+        form.style.display = 'none';
+        if (toggleBtn) toggleBtn.textContent = 'Open Form';
+
+        await loadCatalogData();
+        alert(`Success! "${prodName}" has been added to catalog.`);
+      } catch (err) {
+        alert('Error adding product: ' + err.message);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save to Catalog';
+        }
+      }
+    });
   }
 
   function populateModalCategories() {

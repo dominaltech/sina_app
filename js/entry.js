@@ -21,6 +21,8 @@
 
     // 3. Setup Event Listeners
     setupFirmAutoSuggest();
+    setupCategoryAutoSuggest();
+    setupProductAutoSuggest();
     setupProductCalculations();
     setupPaymentModeTabs();
     setupImageUploader();
@@ -33,8 +35,6 @@
     allFirms = await window.sinaDB.getFirms();
     allCategories = await window.sinaDB.getCategories();
     allProducts = await window.sinaDB.getProducts();
-
-    populateCategories();
   }
 
   function checkUrlParams() {
@@ -45,23 +45,30 @@
     const prod = allProducts.find(p => p.id === productId);
     if (!prod) return;
 
-    const catSelect = document.getElementById('category_select');
-    if (catSelect && prod.category_id) {
-      catSelect.value = prod.category_id;
-      populateProducts(prod.category_id);
-      const prodSelect = document.getElementById('product_select');
-      if (prodSelect) {
-        prodSelect.value = prod.id;
-      }
-      const rateInput = document.getElementById('rate');
-      if (rateInput && prod.default_rate) {
-        rateInput.value = prod.default_rate;
-      }
-      if (prod.default_unit) {
-        setUnit(prod.default_unit);
-      }
-      recalculateTotal();
+    const catInput = document.getElementById('category_input');
+    const catHidden = document.getElementById('category_id_hidden');
+    const prodInput = document.getElementById('product_input');
+    const prodHidden = document.getElementById('product_id_hidden');
+    const rateInput = document.getElementById('rate');
+
+    const cat = allCategories.find(c => c.id === prod.category_id);
+    if (catInput && cat) {
+      catInput.value = cat.name;
+      if (catHidden) catHidden.value = cat.id;
     }
+
+    if (prodInput) {
+      prodInput.value = prod.name + (prod.type && prod.type !== 'Standard' ? ` (${prod.type})` : '');
+      if (prodHidden) prodHidden.value = prod.id;
+    }
+
+    if (rateInput && prod.default_rate) {
+      rateInput.value = prod.default_rate;
+    }
+    if (prod.default_unit) {
+      setUnit(prod.default_unit);
+    }
+    recalculateTotal();
   }
 
   // FIRM AUTO-SUGGEST
@@ -83,7 +90,7 @@
       }
 
       const matches = allFirms.filter(f => 
-        f.firm_name.toLowerCase().includes(query) || 
+        (f.firm_name && f.firm_name.toLowerCase().includes(query)) || 
         (f.contact_person && f.contact_person.toLowerCase().includes(query))
       );
 
@@ -95,18 +102,18 @@
           <div class="suggest-item" data-firm-id="${firm.id}">
             <div class="suggest-firm-name">${escapeHtml(firm.firm_name)}</div>
             <div class="suggest-firm-meta">
-              <span>👤 ${escapeHtml(firm.contact_person || '')}</span>
-              <span>📞 ${escapeHtml(firm.mobile || '')}</span>
+              <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(firm.contact_person || '')}</span>
+              <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${escapeHtml(firm.mobile || '')}</span>
             </div>
           </div>
         `;
       });
 
       // Option to add new firm
-      const exactMatch = allFirms.some(f => f.firm_name.toLowerCase() === query);
+      const exactMatch = allFirms.some(f => f.firm_name && f.firm_name.toLowerCase() === query);
       if (!exactMatch) {
         html += `
-          <div class="add-new-firm-item" id="btn-add-new-firm">
+          <div class="add-new-firm-item" id="btn-add-new-firm" style="padding: 10px 14px; cursor: pointer; color: var(--purple-primary); font-weight: 600; font-size: 0.88rem; background: var(--purple-tint);">
             <span>+ Add "${escapeHtml(firmInput.value.trim())}" as new firm</span>
           </div>
         `;
@@ -150,57 +157,196 @@
     });
   }
 
-  // CATEGORIES & PRODUCTS
-  function populateCategories() {
-    const catSelect = document.getElementById('category_select');
-    if (!catSelect) return;
+  // CATEGORY AUTO-SUGGEST
+  function setupCategoryAutoSuggest() {
+    const catInput = document.getElementById('category_input');
+    const dropdown = document.getElementById('category-autosuggest-dropdown');
+    const hiddenId = document.getElementById('category_id_hidden');
 
-    catSelect.innerHTML = '<option value="">-- Select Category --</option>';
-    allCategories.forEach(cat => {
-      catSelect.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+    if (!catInput || !dropdown) return;
+
+    function renderCategoryMatches() {
+      const query = catInput.value.trim().toLowerCase();
+      const matches = query.length === 0 
+        ? allCategories 
+        : allCategories.filter(c => c.name && c.name.toLowerCase().includes(query));
+
+      let html = '';
+      matches.forEach(c => {
+        html += `
+          <div class="suggest-item cat-suggest-item" data-id="${c.id}" data-name="${escapeHtml(c.name)}">
+            <div class="suggest-firm-name">${escapeHtml(c.name)}</div>
+          </div>
+        `;
+      });
+
+      if (query.length > 0) {
+        const exact = allCategories.some(c => c.name && c.name.toLowerCase() === query);
+        if (!exact) {
+          html += `
+            <div class="add-new-firm-item" id="btn-add-new-cat" style="padding: 10px 14px; cursor: pointer; color: var(--purple-primary); font-weight: 600; font-size: 0.88rem; background: var(--purple-tint);">
+              <span>+ Add "${escapeHtml(catInput.value.trim())}" as new category</span>
+            </div>
+          `;
+        }
+      }
+
+      dropdown.innerHTML = html;
+      dropdown.classList.add('active');
+
+      dropdown.querySelectorAll('.cat-suggest-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.getAttribute('data-id');
+          const name = item.getAttribute('data-name');
+          catInput.value = name;
+          if (hiddenId) hiddenId.value = id;
+          dropdown.classList.remove('active');
+        });
+      });
+
+      const addBtn = document.getElementById('btn-add-new-cat');
+      if (addBtn) {
+        addBtn.addEventListener('click', () => {
+          if (hiddenId) hiddenId.value = '';
+          dropdown.classList.remove('active');
+        });
+      }
+    }
+
+    catInput.addEventListener('focus', renderCategoryMatches);
+    catInput.addEventListener('input', () => {
+      if (hiddenId) hiddenId.value = '';
+      renderCategoryMatches();
     });
 
-    catSelect.addEventListener('change', () => {
-      populateProducts(catSelect.value);
+    document.addEventListener('click', (e) => {
+      if (!catInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('active');
+      }
     });
   }
 
-  function populateProducts(categoryId) {
-    const prodSelect = document.getElementById('product_select');
-    if (!prodSelect) return;
+  // PRODUCT AUTO-SUGGEST
+  function setupProductAutoSuggest() {
+    const prodInput = document.getElementById('product_input');
+    const dropdown = document.getElementById('product-autosuggest-dropdown');
+    const hiddenId = document.getElementById('product_id_hidden');
+    const catInput = document.getElementById('category_input');
+    const catHidden = document.getElementById('category_id_hidden');
+    const rateInput = document.getElementById('rate');
 
-    const filtered = categoryId ? allProducts.filter(p => p.category_id === categoryId) : allProducts;
-    prodSelect.innerHTML = '<option value="">-- Select Product / Type --</option>';
-    filtered.forEach(p => {
-      prodSelect.innerHTML += `<option value="${p.id}" data-unit="${p.default_unit}" data-rate="${p.default_rate}">${escapeHtml(p.name)} (${escapeHtml(p.type || 'Standard')})</option>`;
-    });
-    prodSelect.innerHTML += `<option value="__quick_add__" style="color: var(--purple-primary); font-weight: 700;">+ Add New Product / Commodity...</option>`;
+    if (!prodInput || !dropdown) return;
 
-    prodSelect.addEventListener('change', () => {
-      const selected = prodSelect.options[prodSelect.selectedIndex];
-      if (selected && selected.value === '__quick_add__') {
-        const modal = document.getElementById('add-product-modal');
-        if (modal) {
-          populateModalCategories();
-          const currentCatVal = document.getElementById('category_select')?.value;
-          const catSelect = document.getElementById('modal_prod_category');
-          if (currentCatVal && catSelect) catSelect.value = currentCatVal;
-          modal.classList.add('active');
+    function renderProductMatches() {
+      const query = prodInput.value.trim().toLowerCase();
+      const currentCatId = catHidden ? catHidden.value : '';
+      const currentCatName = catInput ? catInput.value.trim().toLowerCase() : '';
+
+      // Filter products: prefer matching current category if selected
+      let pool = allProducts;
+      if (currentCatId) {
+        const catProds = allProducts.filter(p => p.category_id === currentCatId);
+        if (catProds.length > 0) pool = catProds;
+      } else if (currentCatName) {
+        const cat = allCategories.find(c => c.name && c.name.toLowerCase() === currentCatName);
+        if (cat) {
+          const catProds = allProducts.filter(p => p.category_id === cat.id);
+          if (catProds.length > 0) pool = catProds;
         }
-        prodSelect.value = '';
-        return;
       }
 
-      if (selected && selected.value) {
-        const rate = selected.getAttribute('data-rate');
-        const unit = selected.getAttribute('data-unit');
-        const rateInput = document.getElementById('rate');
-        if (rateInput && rate) rateInput.value = rate;
+      const matches = query.length === 0 
+        ? pool 
+        : pool.filter(p => 
+            (p.name && p.name.toLowerCase().includes(query)) || 
+            (p.type && p.type.toLowerCase().includes(query))
+          );
 
-        if (unit) {
-          setUnit(unit);
+      let html = '';
+      matches.forEach(p => {
+        const unitLabel = p.default_unit === 'per_kg' ? 'Kg' : (p.default_unit === 'per_bag' ? 'Bag' : 'Piece');
+        html += `
+          <div class="suggest-item prod-suggest-item" data-id="${p.id}">
+            <div class="suggest-firm-name">${escapeHtml(p.name)} <span style="font-size:0.8rem;color:var(--text-secondary);font-weight:normal;">(${escapeHtml(p.type || 'Standard')})</span></div>
+            <div class="suggest-firm-meta">
+              <span>Rate: ₹${Number(p.default_rate || 0).toLocaleString('en-IN')} / ${unitLabel}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      if (query.length > 0) {
+        const exact = pool.some(p => p.name && p.name.toLowerCase() === query);
+        if (!exact) {
+          html += `
+            <div class="add-new-firm-item" id="btn-add-new-prod-inline" style="padding: 10px 14px; cursor: pointer; color: var(--purple-primary); font-weight: 600; font-size: 0.88rem; background: var(--purple-tint);">
+              <span>+ Add "${escapeHtml(prodInput.value.trim())}" as new product</span>
+            </div>
+          `;
         }
-        recalculateTotal();
+      }
+
+      dropdown.innerHTML = html;
+      dropdown.classList.add('active');
+
+      dropdown.querySelectorAll('.prod-suggest-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.getAttribute('data-id');
+          const p = allProducts.find(x => x.id === id);
+          if (p) {
+            prodInput.value = p.name;
+            if (hiddenId) hiddenId.value = p.id;
+            
+            // Auto-fill category if needed
+            if (p.category_id) {
+              const cat = allCategories.find(c => c.id === p.category_id);
+              if (cat && catInput) {
+                catInput.value = cat.name;
+                if (catHidden) catHidden.value = cat.id;
+              }
+            }
+
+            // Auto-fill rate and unit
+            if (rateInput && p.default_rate) {
+              rateInput.value = p.default_rate;
+            }
+            if (p.default_unit) {
+              setUnit(p.default_unit);
+            }
+            recalculateTotal();
+          }
+          dropdown.classList.remove('active');
+        });
+      });
+
+      const addBtn = document.getElementById('btn-add-new-prod-inline');
+      if (addBtn) {
+        addBtn.addEventListener('click', () => {
+          dropdown.classList.remove('active');
+          const modal = document.getElementById('add-product-modal');
+          if (modal) {
+            populateModalCategories();
+            const modalProdName = document.getElementById('modal_prod_name');
+            if (modalProdName) modalProdName.value = prodInput.value.trim();
+            const modalCatSelect = document.getElementById('modal_prod_category');
+            if (modalCatSelect && catHidden && catHidden.value) {
+              modalCatSelect.value = catHidden.value;
+            }
+            modal.classList.add('active');
+          }
+        });
+      }
+    }
+
+    prodInput.addEventListener('focus', renderProductMatches);
+    prodInput.addEventListener('input', () => {
+      if (hiddenId) hiddenId.value = '';
+      renderProductMatches();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!prodInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('active');
       }
     });
   }
@@ -218,9 +364,9 @@
 
     function openModal() {
       populateModalCategories();
-      const currentCatVal = document.getElementById('category_select')?.value;
-      if (currentCatVal && catSelect) {
-        catSelect.value = currentCatVal;
+      const currentCatId = document.getElementById('category_id_hidden')?.value;
+      if (currentCatId && catSelect) {
+        catSelect.value = currentCatId;
       }
       modal.classList.add('active');
     }
@@ -295,20 +441,24 @@
           allCategories = await window.sinaDB.getCategories();
           allProducts = await window.sinaDB.getProducts();
 
-          // Refresh main select elements
-          populateCategories();
-          const mainCatSelect = document.getElementById('category_select');
-          if (mainCatSelect) {
-            mainCatSelect.value = newProd.category_id;
-            populateProducts(newProd.category_id);
-            const mainProdSelect = document.getElementById('product_select');
-            if (mainProdSelect) {
-              mainProdSelect.value = newProd.id;
-            }
+          // Fill inputs
+          const catInput = document.getElementById('category_input');
+          const catHidden = document.getElementById('category_id_hidden');
+          const prodInput = document.getElementById('product_input');
+          const prodHidden = document.getElementById('product_id_hidden');
+          const rateInput = document.getElementById('rate');
+
+          const cat = allCategories.find(c => c.id === newProd.category_id);
+          if (cat && catInput) {
+            catInput.value = cat.name;
+            if (catHidden) catHidden.value = cat.id;
           }
 
-          // Fill rate and unit in form
-          const rateInput = document.getElementById('rate');
+          if (prodInput) {
+            prodInput.value = newProd.name;
+            if (prodHidden) prodHidden.value = newProd.id;
+          }
+
           if (rateInput) rateInput.value = rate;
           setUnit(unit);
           recalculateTotal();
@@ -478,11 +628,8 @@
       const mobile = document.getElementById('mobile')?.value.trim();
       const address = document.getElementById('address')?.value.trim();
 
-      const catSelect = document.getElementById('category_select');
-      const categoryName = catSelect ? catSelect.options[catSelect.selectedIndex]?.text : '';
-
-      const prodSelect = document.getElementById('product_select');
-      const productName = prodSelect ? prodSelect.options[prodSelect.selectedIndex]?.text : '';
+      const categoryName = document.getElementById('category_input')?.value.trim();
+      const productName = document.getElementById('product_input')?.value.trim();
 
       const quantity = parseFloat(document.getElementById('quantity')?.value) || 0;
       const rate = parseFloat(document.getElementById('rate')?.value) || 0;
@@ -505,6 +652,14 @@
         alert('Address is compulsory (*).');
         return;
       }
+      if (!categoryName) {
+        alert('Please enter or select a Category (*).');
+        return;
+      }
+      if (!productName) {
+        alert('Please enter or select a Product / Item (*).');
+        return;
+      }
       if (quantity <= 0) {
         alert('Please enter a valid Quantity.');
         return;
@@ -516,8 +671,8 @@
 
       // Check if firm is new, save to firm directory
       const firmInput = document.getElementById('firm_name');
-      const isExisting = firmInput.getAttribute('data-selected-firm-id');
-      if (!isExisting) {
+      const isExistingFirm = firmInput.getAttribute('data-selected-firm-id');
+      if (!isExistingFirm) {
         await window.sinaDB.addFirm({
           firm_name: firmName,
           contact_person: contactPerson,
@@ -525,6 +680,26 @@
           address: address
         });
         allFirms = await window.sinaDB.getFirms();
+      }
+
+      // Check if category or product is new, auto-persist to catalog
+      let existingCat = allCategories.find(c => c.name && c.name.toLowerCase() === categoryName.toLowerCase());
+      if (!existingCat) {
+        existingCat = await window.sinaDB.addCategory(categoryName);
+        allCategories = await window.sinaDB.getCategories();
+      }
+
+      let existingProd = allProducts.find(p => p.name && p.name.toLowerCase() === productName.toLowerCase());
+      if (!existingProd) {
+        await window.sinaDB.addProduct({
+          category_id: existingCat ? existingCat.id : null,
+          category_name: categoryName,
+          name: productName,
+          type: 'Standard',
+          default_unit: selectedUnit,
+          default_rate: rate
+        });
+        allProducts = await window.sinaDB.getProducts();
       }
 
       // PAYMENT DETAILS
@@ -579,7 +754,7 @@
         await window.sinaDB.saveProcurementEntry(entryPayload);
 
         // Show Success Feedback
-        alert(`Success! Entry for ${firmName} saved.\nTotal Amount: ₹${totalAmount.toLocaleString('en-IN')}\nPayment Mode: ${selectedPaymentMode.toUpperCase()}`);
+        alert(`Success! Purchase entry for ${firmName} saved.\nTotal Amount: ₹${totalAmount.toLocaleString('en-IN')}\nPayment Mode: ${selectedPaymentMode.toUpperCase()}`);
 
         // Redirect to records
         window.location.href = 'records.html';
@@ -587,7 +762,7 @@
         alert('Error saving entry: ' + err.message);
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Save Procurement Entry';
+          submitBtn.innerHTML = 'Save Purchase Entry';
         }
       }
     });

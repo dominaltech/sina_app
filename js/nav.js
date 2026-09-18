@@ -105,7 +105,7 @@
           </a>
           <a href="entry.html" class="drawer-link ${isEntry ? 'active' : ''}">
             <span class="nav-icon">${icons.get('plus', { size: 20 })}</span>
-            <span class="nav-label">New Procurement Entry</span>
+            <span class="nav-label">New Purchase Entry</span>
           </a>
           <a href="records.html" class="drawer-link ${isRecords ? 'active' : ''}">
             <span class="nav-icon">${icons.get('records', { size: 20 })}</span>
@@ -117,7 +117,7 @@
           </a>
           <a href="profile.html" class="drawer-link ${isProfile ? 'active' : ''}">
             <span class="nav-icon">${icons.get('cash', { size: 20 })}</span>
-            <span class="nav-label">Cash Float & Expenses</span>
+            <span class="nav-label">Cash Given & Expenses</span>
           </a>
         </nav>
 
@@ -166,7 +166,7 @@
       </a>
       <a href="profile.html" class="bottom-nav-item ${isProfile ? 'active' : ''}">
         <span class="b-icon">${icons.get('user', { size: 22 })}</span>
-        <span class="b-label">Float & Exp</span>
+        <span class="b-label">Cash & Exp</span>
       </a>
     `;
 

@@ -232,18 +232,23 @@
     }
 
     async addCategory(name) {
+      const clean = name.trim();
       const categories = await this.getCategories();
-      const existing = categories.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
+      const existing = categories.find(c => c.name.toLowerCase() === clean.toLowerCase());
       if (existing) return existing;
 
-      const newCat = { id: 'c_' + Date.now(), name: name.trim() };
+      const remote = await this.supabaseRequest('categories', {
+        method: 'POST',
+        body: JSON.stringify({ name: clean })
+      });
+
+      const newCat = (remote && Array.isArray(remote) && remote[0]) ? remote[0] : {
+        id: 'c_' + Date.now(),
+        name: clean
+      };
+
       categories.push(newCat);
       localStorage.setItem('sina_categories', JSON.stringify(categories));
-
-      this.supabaseRequest('categories', {
-        method: 'POST',
-        body: JSON.stringify({ name: newCat.name })
-      });
 
       this.broadcast('CATEGORY_ADDED', newCat);
       return newCat;
@@ -264,37 +269,34 @@
     }
 
     async addProduct(product) {
-      const products = JSON.parse(localStorage.getItem('sina_products') || '[]');
-
-      // If user provided a new category name on the fly
       let categoryId = product.category_id;
       if (!categoryId && product.category_name) {
         const cat = await this.addCategory(product.category_name);
         categoryId = cat.id;
       }
 
-      const newProd = {
-        id: 'p_' + Date.now(),
-        category_id: categoryId || 'c1',
+      const payload = {
+        category_id: (categoryId && categoryId.length === 36) ? categoryId : null,
         name: product.name.trim(),
         type: product.type ? product.type.trim() : 'Standard',
         default_unit: product.default_unit || 'per_kg',
         default_rate: parseFloat(product.default_rate) || 0
       };
+
+      const remote = await this.supabaseRequest('products', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      const newProd = (remote && Array.isArray(remote) && remote[0]) ? remote[0] : {
+        id: 'p_' + Date.now(),
+        category_id: categoryId || 'c1',
+        ...payload
+      };
+
+      const products = JSON.parse(localStorage.getItem('sina_products') || '[]');
       products.push(newProd);
       localStorage.setItem('sina_products', JSON.stringify(products));
-
-      // Attempt Supabase insert
-      this.supabaseRequest('products', {
-        method: 'POST',
-        body: JSON.stringify({
-          category_id: newProd.category_id,
-          name: newProd.name,
-          type: newProd.type,
-          default_unit: newProd.default_unit,
-          default_rate: newProd.default_rate
-        })
-      });
 
       this.broadcast('PRODUCT_ADDED', newProd);
       return newProd;
@@ -463,10 +465,10 @@
       return local;
     }
 
-    // 4. DAILY FLOAT & EXPENSES
-    async getDailyFloat(repId) {
-      const today = new Date().toISOString().split('T')[0];
-      const remote = await this.supabaseRequest(`daily_floats?representative_id=eq.${repId}&order=date.desc&limit=1`);
+    // 4. DAILY CASH GIVEN & EXPENSES
+    async getDailyFloat(repId, date = null) {
+      const targetDate = date ? String(date).trim() : new Date().toISOString().split('T')[0];
+      const remote = await this.supabaseRequest(`daily_floats?representative_id=eq.${repId}&date=eq.${targetDate}&limit=1`);
       if (remote && Array.isArray(remote) && remote.length > 0) {
         const rf = remote[0];
         const floats = JSON.parse(localStorage.getItem('sina_floats') || '[]');
@@ -476,18 +478,30 @@
         return parseFloat(rf.float_amount) || 0;
       }
 
+      // Check offline cache for this date
       const floats = JSON.parse(localStorage.getItem('sina_floats') || '[]');
-      let found = floats.find(f => String(f.representative_id) === String(repId) && f.date === today);
-      if (!found) {
+      let found = floats.find(f => String(f.representative_id) === String(repId) && f.date === targetDate);
+      if (!found && !date) {
+        // Fallback to latest float if looking for current float
         const repFloats = floats.filter(f => String(f.representative_id) === String(repId));
         if (repFloats.length > 0) {
-          found = repFloats[repFloats.length - 1];
+          found = repFloats[0];
         }
       }
       if (found) {
         return parseFloat(found.float_amount) || 0;
       }
       return repId === '22222222-2222-2222-2222-222222222222' ? 15000.00 : 0;
+    }
+
+    async getDailyCashHistory(repId) {
+      const remote = await this.supabaseRequest(`daily_floats?representative_id=eq.${repId}&order=date.desc`);
+      if (remote && Array.isArray(remote)) {
+        localStorage.setItem('sina_floats', JSON.stringify(remote));
+        return remote;
+      }
+      const floats = JSON.parse(localStorage.getItem('sina_floats') || '[]');
+      return floats.filter(f => f.representative_id === repId).sort((a, b) => new Date(b.date) - new Date(a.date));
     }
 
     async saveExpense(expense) {
