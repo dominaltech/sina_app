@@ -161,6 +161,9 @@
     });
 
     container.innerHTML = html;
+    if (window.sinaTranslate) {
+      window.sinaTranslate.applyInstantTranslation(container);
+    }
   }
 
   function renderFirms() {
@@ -196,6 +199,9 @@
     });
 
     container.innerHTML = html;
+    if (window.sinaTranslate) {
+      window.sinaTranslate.applyInstantTranslation(container);
+    }
   }
 
   window.openImageViewer = function(imgSrc) {

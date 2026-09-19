@@ -122,6 +122,9 @@
     });
 
     container.innerHTML = html;
+    if (window.sinaTranslate) {
+      window.sinaTranslate.applyInstantTranslation(container);
+    }
   }
 
   function setupFilters() {

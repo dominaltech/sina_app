@@ -95,6 +95,9 @@
     });
 
     listEl.innerHTML = html;
+    if (window.sinaTranslate) {
+      window.sinaTranslate.applyInstantTranslation(listEl);
+    }
   }
 
   // EXPENSE MODAL CONTROLLER
