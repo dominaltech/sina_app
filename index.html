@@ -141,14 +141,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         New Entry
       </a>
-      <a href="products.html" class="btn btn-secondary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Products
-      </a>
-      <button type="button" id="btn-open-expense-modal" class="btn btn-secondary" title="Log Expense">
+      <a href="expenses.html" class="btn btn-secondary" title="Log Field Expense">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>
-        Expense
-      </button>
+        Field Expense
+      </a>
     </div>
 
     <!-- 2x2 KPI Metric Cards (Cleanly fits mobile screens without horizontal scroll) -->
@@ -182,8 +178,8 @@
         <strong id="float-initial-amount">₹15,000</strong>
       </div>
       <div class="float-math-row">
-        <span>Cash Collected:</span>
-        <strong style="color: var(--success-color);" id="float-cash-collected">+ ₹0</strong>
+        <span>Cash Purchases Spent:</span>
+        <strong style="color: var(--warning-color);" id="float-cash-spent">- ₹0</strong>
       </div>
       <div class="float-math-row">
         <span>Daily Expenses:</span>
@@ -206,39 +202,6 @@
       </div>
     </div>
   </main>
-
-  <!-- LOG EXPENSE MODAL -->
-  <div id="expense-modal" class="sina-modal-backdrop">
-    <div class="sina-modal-card">
-      <div class="pwa-modal-header">
-        <div class="pwa-badge-purple">Field Expense</div>
-        <button class="icon-btn" id="btn-close-expense-modal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <form id="expense-form">
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="expense_amount">Expense Amount (₹) *</label>
-          <input type="number" id="expense_amount" class="form-input" placeholder="e.g. 250" min="1" step="any" required>
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="expense_category">Category *</label>
-          <select id="expense_category" class="form-select" required>
-            <option value="fuel">Fuel / Petrol</option>
-            <option value="food">Food & Refreshments</option>
-            <option value="travel">Bus / Auto / Toll</option>
-            <option value="vehicle_maintenance">Vehicle Repair</option>
-            <option value="misc">Miscellaneous</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label class="form-label" for="expense_notes">Notes / Details</label>
-          <input type="text" id="expense_notes" class="form-input" placeholder="e.g. Petrol for bike at Shell pump">
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Save Expense</button>
-      </form>
-    </div>
-  </div>
 
   <!-- Scripts -->
   <script src="js/config.js"></script>

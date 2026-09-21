@@ -375,11 +375,11 @@
       };
     }
 
-    // 3. PROCUREMENT ENTRIES (Form submission matching sketch)
+    // 3. PROCUREMENT ENTRIES (Form submission with multi-product support)
     async saveProcurementEntry(entry) {
       const isCash = entry.payment_mode === 'cash';
-      // In Supabase schema, status IN ('pending', 'completed', 'verified', 'rejected')
-      const entryStatus = isCash ? 'completed' : 'pending';
+      // In Supabase schema, status IN ('pending', 'pending_approval', 'completed', 'verified', 'rejected')
+      const entryStatus = isCash ? 'completed' : 'pending_approval';
 
       const headerPayload = {
         representative_id: entry.representative_id || '22222222-2222-2222-2222-222222222222',
@@ -389,7 +389,7 @@
         address: entry.address,
         total_amount: parseFloat(entry.total_amount) || 0,
         payment_mode: entry.payment_mode,
-        cash_amount: parseFloat(entry.cash_amount) || 0,
+        cash_amount: isCash ? (parseFloat(entry.total_amount) || 0) : 0,
         upi_id: entry.upi_id || null,
         upi_utr: entry.upi_utr || null,
         status: entryStatus
@@ -403,20 +403,33 @@
 
       const createdId = (remote && Array.isArray(remote) && remote[0]) ? remote[0].id : ('entry_' + Date.now());
 
-      // 2. Post line item to procurement_items
-      if (remote && Array.isArray(remote) && remote[0]) {
-        await this.supabaseRequest('procurement_items', {
-          method: 'POST',
-          body: JSON.stringify({
-            entry_id: createdId,
+      const itemsToSave = (Array.isArray(entry.items) && entry.items.length > 0)
+        ? entry.items
+        : [{
             category_name: entry.category_name || 'General',
             product_name: entry.type || entry.product_name || entry.category_name || 'Goods',
             unit: entry.unit || 'per_kg',
             quantity: parseFloat(entry.quantity) || 0,
             rate: parseFloat(entry.rate) || 0,
             line_total: parseFloat(entry.total_amount) || 0
-          })
-        });
+          }];
+
+      // 2. Post line items to procurement_items
+      if (remote && Array.isArray(remote) && remote[0]) {
+        for (const it of itemsToSave) {
+          await this.supabaseRequest('procurement_items', {
+            method: 'POST',
+            body: JSON.stringify({
+              entry_id: createdId,
+              category_name: it.category_name || 'General',
+              product_name: it.product_name || it.type || 'Goods',
+              unit: it.unit || 'per_kg',
+              quantity: parseFloat(it.quantity) || 0,
+              rate: parseFloat(it.rate) || 0,
+              line_total: parseFloat(it.line_total) || 0
+            })
+          });
+        }
 
         // 3. Post attachments to payment_attachments
         if (Array.isArray(entry.images) && entry.images.length > 0) {
@@ -438,9 +451,9 @@
           method: 'POST',
           body: JSON.stringify({
             representative_id: headerPayload.representative_id,
-            title: 'New Procurement Entry',
+            title: entry.payment_mode === 'upi' ? 'New UPI Payment Request' : 'New Procurement Entry',
             message: `${entry.rep_name || 'Representative'} logged ${entry.firm_name} (₹${headerPayload.total_amount})`,
-            type: 'procurement',
+            type: entry.payment_mode === 'upi' ? 'payment_pending' : 'procurement',
             reference_id: createdId
           })
         });
@@ -456,11 +469,11 @@
         contact_person: entry.contact_person,
         mobile: entry.mobile,
         address: entry.address,
-        category_name: entry.category_name,
-        type: entry.type,
-        quantity: parseFloat(entry.quantity) || 0,
-        unit: entry.unit || 'per_kg',
-        rate: parseFloat(entry.rate) || 0,
+        category_name: itemsToSave[0]?.category_name || 'General',
+        type: itemsToSave[0]?.product_name || 'Goods',
+        quantity: itemsToSave[0]?.quantity || 1,
+        unit: itemsToSave[0]?.unit || 'per_kg',
+        rate: itemsToSave[0]?.rate || 0,
         total_amount: headerPayload.total_amount,
         payment_mode: entry.payment_mode,
         cash_amount: headerPayload.cash_amount,
@@ -468,7 +481,8 @@
         upi_utr: entry.upi_utr || '',
         images: entry.images || [],
         status: entryStatus,
-        created_at: (remote && remote[0]?.created_at) ? remote[0].created_at : new Date().toISOString()
+        created_at: (remote && remote[0]?.created_at) ? remote[0].created_at : new Date().toISOString(),
+        items: itemsToSave
       };
 
       const entries = JSON.parse(localStorage.getItem('sina_entries') || '[]');
@@ -639,7 +653,8 @@
         date: new Date().toISOString().split('T')[0],
         amount: parseFloat(expense.amount) || 0,
         category: expense.category || 'fuel',
-        notes: expense.notes || ''
+        notes: expense.notes || '',
+        receipt_url: expense.receipt_url || expense.receipt_photo || null
       };
 
       const remote = await this.supabaseRequest('expenses', {
@@ -692,7 +707,7 @@
       return expenses;
     }
 
-    // 5. TODAY RECONCILIATION FOR REP
+    // 5. TODAY RECONCILIATION FOR REP (Morning Float - Cash Purchases Spent - Expenses = Net Cash)
     async getRepTodaySummary(repId) {
       const float = await this.getDailyFloat(repId);
       const entries = await this.getEntries(repId);
@@ -701,26 +716,75 @@
       const todayExpenses = (await this.getExpenses(repId)).filter(e => e.created_at.startsWith(today));
 
       const totalProcurementAmount = todayEntries.reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
-      const cashCollected = todayEntries.reduce((acc, curr) => acc + (parseFloat(curr.cash_amount) || 0), 0);
-      const upiCollected = todayEntries.filter(e => e.payment_mode === 'upi').reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
-      const bankTransferCollected = todayEntries.filter(e => e.payment_mode === 'bank_transfer').reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
+      const cashSpent = todayEntries.filter(e => e.payment_mode === 'cash').reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
+      const upiSpent = todayEntries.filter(e => e.payment_mode === 'upi').reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
+      const bankTransferSpent = todayEntries.filter(e => e.payment_mode === 'bank_transfer').reduce((acc, curr) => acc + (parseFloat(curr.total_amount) || 0), 0);
       const totalExpenses = todayExpenses.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
-      // Cash in hand = Starting Cash Float + Cash Collected - Field Expenses
-      const cashInHand = float + cashCollected - totalExpenses;
+      // Reps ONLY spend money: Cash in hand = Starting Float - Cash Spent on Purchases - Field Expenses
+      const cashInHand = Math.max(0, float - cashSpent - totalExpenses);
 
       return {
         float,
         visitsCount: todayEntries.length,
         totalProcurementAmount,
-        cashCollected,
-        upiCollected,
-        bankTransferCollected,
+        cashSpent,
+        upiSpent,
+        bankTransferSpent,
         totalExpenses,
         cashInHand,
         todayEntries,
         todayExpenses
       };
+    }
+
+    // 6. APP SETTINGS (Admin dynamic policies)
+    async getAppSettings() {
+      const remote = await this.supabaseRequest('app_settings?select=*');
+      if (remote && Array.isArray(remote)) {
+        const map = {};
+        remote.forEach(s => { map[s.key] = s.value; });
+        localStorage.setItem('sina_app_settings', JSON.stringify(map));
+        return map;
+      }
+      return JSON.parse(localStorage.getItem('sina_app_settings') || '{"require_expense_receipt":"false"}');
+    }
+
+    async isExpenseReceiptRequired() {
+      const settings = await this.getAppSettings();
+      return settings['require_expense_receipt'] === 'true';
+    }
+
+    // 7. CREATE AD-HOC PRODUCT (Auto-saved when typed in field entry)
+    async createProduct(prod) {
+      const payload = {
+        name: prod.name.trim(),
+        type: prod.type || 'Field Added',
+        default_unit: prod.default_unit || 'per_kg',
+        default_rate: parseFloat(prod.default_rate) || 0,
+        category_id: prod.category_id || null,
+        is_active: true
+      };
+
+      const remote = await this.supabaseRequest('products', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      const created = (remote && Array.isArray(remote) && remote[0]) ? remote[0] : {
+        id: 'p_' + Date.now(),
+        ...payload,
+        created_at: new Date().toISOString()
+      };
+
+      const prods = JSON.parse(localStorage.getItem('sina_products') || '[]');
+      if (!prods.some(p => p.name.toLowerCase() === created.name.toLowerCase())) {
+        prods.push(created);
+        localStorage.setItem('sina_products', JSON.stringify(prods));
+      }
+
+      this.broadcast('PRODUCT_ADDED', created);
+      return created;
     }
   }
 

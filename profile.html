@@ -116,6 +116,10 @@
         <strong id="prof-float">₹0</strong>
       </div>
       <div class="ledger-row">
+        <span>Cash Purchases Spent:</span>
+        <strong style="color: var(--warning-color);" id="prof-cash-spent">- ₹0</strong>
+      </div>
+      <div class="ledger-row">
         <span>Daily Expenses:</span>
         <strong style="color: var(--danger-color);" id="prof-expenses">- ₹0</strong>
       </div>
@@ -143,7 +147,7 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h3 style="font-size: 1rem; font-weight: 700;">Today's Expenses</h3>
-        <a href="index.html" class="text-purple" style="font-size: 0.8rem; font-weight: 600;">+ Add Expense</a>
+        <a href="expenses.html" class="text-purple" style="font-size: 0.8rem; font-weight: 600;">+ Add Expense</a>
       </div>
       <div id="profile-expenses-list">
         <p class="text-muted text-center" style="padding: 12px;">No expenses logged today.</p>
@@ -165,6 +169,7 @@
     </div>
   </main>
 
+  <!-- Scripts -->
   <script src="js/config.js"></script>
   <script src="js/icons.js"></script>
   <script src="js/db.js"></script>
@@ -193,6 +198,8 @@
 
       const summary = await window.sinaDB.getRepTodaySummary(rep.id);
       document.getElementById('prof-float').textContent = '₹' + summary.float.toLocaleString('en-IN');
+      const cashSpentEl = document.getElementById('prof-cash-spent');
+      if (cashSpentEl) cashSpentEl.textContent = '- ₹' + summary.cashSpent.toLocaleString('en-IN');
       document.getElementById('prof-expenses').textContent = '- ₹' + summary.totalExpenses.toLocaleString('en-IN');
       document.getElementById('prof-net-cash').textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
 
@@ -210,13 +217,14 @@
           const dateStr = new Date(item.date).toLocaleDateString('en-IN', {
             weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
           });
+          const floatAmt = parseFloat(item.float_amount || item.amount || 0);
           hHtml += `
             <div class="ledger-row" style="align-items: center;">
               <div>
                 <div style="font-weight: 700; font-size: 0.88rem;">${dateStr}</div>
                 <div style="font-size: 0.75rem; color: var(--text-secondary);">${escapeHtml(item.notes || 'Daily Cash Handover')}</div>
               </div>
-              <strong style="color: var(--purple-primary); font-size: 1rem;">₹${Number(item.amount || 0).toLocaleString('en-IN')}</strong>
+              <strong style="color: var(--purple-primary); font-size: 1rem;">₹${floatAmt.toLocaleString('en-IN')}</strong>
             </div>
           `;
         });

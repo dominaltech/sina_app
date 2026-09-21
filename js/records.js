@@ -1,14 +1,11 @@
-// SINA App - Records & Firms Directory Controller
+// SINA App - Records / Orders History Controller
 (function() {
   let allEntries = [];
-  let allFirms = [];
-  let activeTab = 'entries'; // 'entries' | 'firms'
 
   document.addEventListener('DOMContentLoaded', async () => {
     const rep = window.sinaAuth.requireAuth();
     if (!rep) return;
 
-    setupTabs();
     setupSearch();
     setupEditEntryModal();
     await loadData();
@@ -21,35 +18,7 @@
   async function loadData() {
     const rep = window.sinaAuth.getCurrentUser();
     allEntries = await window.sinaDB.getEntries(rep ? rep.id : null);
-    allFirms = await window.sinaDB.getFirms();
-
     renderEntries();
-    renderFirms();
-  }
-
-  function setupTabs() {
-    const tabEntries = document.getElementById('tab-btn-entries');
-    const tabFirms = document.getElementById('tab-btn-firms');
-    const viewEntries = document.getElementById('view-entries');
-    const viewFirms = document.getElementById('view-firms');
-
-    if (!tabEntries || !tabFirms) return;
-
-    tabEntries.addEventListener('click', () => {
-      activeTab = 'entries';
-      tabEntries.classList.add('active');
-      tabFirms.classList.remove('active');
-      viewEntries.style.display = 'block';
-      viewFirms.style.display = 'none';
-    });
-
-    tabFirms.addEventListener('click', () => {
-      activeTab = 'firms';
-      tabFirms.classList.add('active');
-      tabEntries.classList.remove('active');
-      viewFirms.style.display = 'block';
-      viewEntries.style.display = 'none';
-    });
   }
 
   function setupSearch() {
@@ -57,10 +26,7 @@
     const modeFilter = document.getElementById('records-mode-filter');
 
     if (searchInput) {
-      searchInput.addEventListener('input', () => {
-        if (activeTab === 'entries') renderEntries();
-        else renderFirms();
-      });
+      searchInput.addEventListener('input', renderEntries);
     }
 
     if (modeFilter) {
@@ -97,8 +63,21 @@
     let html = '';
     filtered.forEach(entry => {
       const dateStr = new Date(entry.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      const modeLabel = entry.payment_mode === 'cash' ? 'Cash' : (entry.payment_mode === 'upi' ? 'UPI' : 'Bank Transfer');
       const hasImages = entry.images && entry.images.length > 0;
+      const items = entry.items && entry.items.length > 0 ? entry.items : null;
+
+      let paymentBadge = '';
+      if (entry.payment_mode === 'cash') {
+        paymentBadge = '<span class="badge badge-success">Cash Paid</span>';
+      } else if (entry.payment_mode === 'upi') {
+        if (entry.status === 'verified' || entry.upi_utr) {
+          paymentBadge = `<span class="badge badge-success">UPI Paid &bull; UTR: ${escapeHtml(entry.upi_utr || 'Settled')}</span>`;
+        } else {
+          paymentBadge = '<span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 700;">Awaiting Admin UPI Payment</span>';
+        }
+      } else {
+        paymentBadge = `<span class="badge ${entry.status === 'verified' ? 'badge-success' : 'badge-purple'}">${entry.status === 'verified' ? 'Bank Verified' : 'Bank Transfer Pending'}</span>`;
+      }
 
       html += `
         <div class="card record-item-card">
@@ -109,39 +88,56 @@
             </div>
             <div class="record-amount-col">
               <span class="record-total">₹${parseFloat(entry.total_amount || 0).toLocaleString('en-IN')}</span>
-              <span class="badge ${entry.payment_mode === 'cash' ? 'badge-success' : 'badge-purple'}">${modeLabel}</span>
+              <div style="margin-top: 4px;">${paymentBadge}</div>
             </div>
           </div>
 
-          <div class="record-details-grid">
-            <div class="record-meta-line">
-              <span class="meta-lbl">Item:</span>
-              <span class="meta-val">${escapeHtml(entry.type || entry.category_name || 'Goods')}</span>
+          <!-- Items Breakdown -->
+          ${items ? `
+            <div style="background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 10px; font-size: 0.82rem;">
+              <div style="font-weight: 700; color: var(--purple-primary); margin-bottom: 6px;">Items Purchased (${items.length}):</div>
+              ${items.map(item => `
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding: 4px 0;">
+                  <span><strong>${escapeHtml(item.product_name || item.type || 'Item')}</strong> (${item.quantity} ${item.unit?.replace('per_', '')} @ ₹${item.rate})</span>
+                  <span style="font-weight: 700;">₹${parseFloat(item.line_total || 0).toLocaleString('en-IN')}</span>
+                </div>
+              `).join('')}
             </div>
-            <div class="record-meta-line">
-              <span class="meta-lbl">Quantity:</span>
-              <span class="meta-val">${entry.quantity} (${entry.unit?.replace('per_', '')})</span>
+          ` : `
+            <div class="record-details-grid">
+              <div class="record-meta-line">
+                <span class="meta-lbl">Item:</span>
+                <span class="meta-val">${escapeHtml(entry.type || entry.product_name || entry.category_name || 'Goods')}</span>
+              </div>
+              <div class="record-meta-line">
+                <span class="meta-lbl">Quantity:</span>
+                <span class="meta-val">${entry.quantity || 1} (${entry.unit?.replace('per_', '')})</span>
+              </div>
+              <div class="record-meta-line">
+                <span class="meta-lbl">Rate:</span>
+                <span class="meta-val">₹${entry.rate || 0} / ${entry.unit?.replace('per_', '')}</span>
+              </div>
+              <div class="record-meta-line">
+                <span class="meta-lbl">Line Total:</span>
+                <span class="meta-val">₹${parseFloat(entry.total_amount || 0).toLocaleString('en-IN')}</span>
+              </div>
             </div>
-            <div class="record-meta-line">
-              <span class="meta-lbl">Rate:</span>
-              <span class="meta-val">₹${entry.rate} / ${entry.unit?.replace('per_', '')}</span>
-            </div>
-            <div class="record-meta-line">
-              <span class="meta-lbl">Contact:</span>
-              <span class="meta-val">${escapeHtml(entry.contact_person)} (<a href="tel:${entry.mobile}" class="text-purple">${entry.mobile}</a>)</span>
-            </div>
+          `}
+
+          <div style="margin-top: 8px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--text-secondary);">Contact: <strong>${escapeHtml(entry.contact_person)}</strong> (<a href="tel:${entry.mobile}" class="text-purple">${entry.mobile}</a>)</span>
           </div>
 
           ${entry.payment_mode === 'upi' && entry.upi_id ? `
-            <div class="payment-ref-badge">
-              <span>UPI: ${escapeHtml(entry.upi_id)}</span>
-              ${entry.upi_utr ? `<span>UTR: ${escapeHtml(entry.upi_utr)}</span>` : ''}
+            <div class="payment-ref-badge" style="margin-top: 8px;">
+              <span>Firm UPI: <strong>${escapeHtml(entry.upi_id)}</strong></span>
+              ${entry.upi_utr ? `<span>UTR: <strong>${escapeHtml(entry.upi_utr)}</strong></span>` : '<span style="color: #D97706;">Admin Payment In-Progress</span>'}
             </div>
           ` : ''}
 
           ${hasImages ? `
             <div class="attachment-preview-row">
-              <span class="meta-lbl">Passbook / Cheque Proofs (${entry.images.length}):</span>
+              <span class="meta-lbl">Proofs & Attachments (${entry.images.length}):</span>
               <div class="thumb-strip">
                 ${entry.images.map((img, i) => `
                   <img src="${img}" class="strip-thumb" onclick="openImageViewer('${img}')" alt="Attachment ${i+1}">
@@ -156,44 +152,6 @@
               Edit Entry
             </button>
           </div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-    if (window.sinaTranslate) {
-      window.sinaTranslate.applyInstantTranslation(container);
-    }
-  }
-
-  function renderFirms() {
-    const container = document.getElementById('firms-list-container');
-    if (!container) return;
-
-    const query = document.getElementById('records-search-input')?.value.trim().toLowerCase() || '';
-
-    let filtered = allFirms.filter(f => 
-      !query || 
-      f.firm_name.toLowerCase().includes(query) || 
-      f.contact_person.toLowerCase().includes(query) || 
-      f.address.toLowerCase().includes(query)
-    );
-
-    if (filtered.length === 0) {
-      container.innerHTML = `<div class="card text-center text-muted" style="padding: 24px;">No firms found matching your search.</div>`;
-      return;
-    }
-
-    let html = '';
-    filtered.forEach(f => {
-      html += `
-        <div class="card firm-directory-card">
-          <div class="firm-card-top">
-            <h4 class="firm-name-txt">${escapeHtml(f.firm_name)}</h4>
-            <a href="tel:${f.mobile}" class="btn-call-firm" title="Call">${f.mobile}</a>
-          </div>
-          <div class="firm-contact-txt"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(f.contact_person)}</div>
-          <div class="firm-address-txt"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${escapeHtml(f.address)}</div>
         </div>
       `;
     });

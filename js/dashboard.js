@@ -17,7 +17,6 @@
     }
 
     await loadDashboardStats();
-    setupExpenseModal();
   });
 
   window.refreshCurrentPageData = async function() {
@@ -36,7 +35,7 @@
     const expensesCountEl = document.getElementById('kpi-expenses-count');
     const cashInHandEl = document.getElementById('kpi-cash-in-hand');
     const floatAmountEl = document.getElementById('float-initial-amount');
-    const cashCollectedEl = document.getElementById('float-cash-collected');
+    const cashSpentEl = document.getElementById('float-cash-spent');
     const totalExpensesEl = document.getElementById('float-total-expenses');
 
     if (visitsCountEl) visitsCountEl.textContent = summary.visitsCount;
@@ -47,7 +46,7 @@
     if (cashInHand2El) cashInHand2El.textContent = '₹' + summary.cashInHand.toLocaleString('en-IN');
 
     if (floatAmountEl) floatAmountEl.textContent = '₹' + summary.float.toLocaleString('en-IN');
-    if (cashCollectedEl) cashCollectedEl.textContent = '+ ₹' + summary.cashCollected.toLocaleString('en-IN');
+    if (cashSpentEl) cashSpentEl.textContent = '- ₹' + summary.cashSpent.toLocaleString('en-IN');
     if (totalExpensesEl) totalExpensesEl.textContent = '- ₹' + summary.totalExpenses.toLocaleString('en-IN');
 
     renderRecentVisits(summary.todayEntries);
@@ -97,47 +96,6 @@
     listEl.innerHTML = html;
     if (window.sinaTranslate) {
       window.sinaTranslate.applyInstantTranslation(listEl);
-    }
-  }
-
-  // EXPENSE MODAL CONTROLLER
-  function setupExpenseModal() {
-    const openBtn = document.getElementById('btn-open-expense-modal');
-    const modal = document.getElementById('expense-modal');
-    const closeBtn = document.getElementById('btn-close-expense-modal');
-    const form = document.getElementById('expense-form');
-
-    if (!openBtn || !modal) return;
-
-    openBtn.addEventListener('click', () => modal.classList.add('active'));
-    if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const rep = window.sinaAuth.getCurrentUser();
-        const amount = parseFloat(document.getElementById('expense_amount')?.value) || 0;
-        const category = document.getElementById('expense_category')?.value || 'fuel';
-        const notes = document.getElementById('expense_notes')?.value.trim();
-
-        if (amount <= 0) {
-          alert('Please enter a valid expense amount.');
-          return;
-        }
-
-        await window.sinaDB.saveExpense({
-          representative_id: rep.id,
-          rep_name: rep.name,
-          amount,
-          category,
-          notes
-        });
-
-        alert(`Expense of ₹${amount} logged successfully.`);
-        modal.classList.remove('active');
-        form.reset();
-        await loadDashboardStats();
-      });
     }
   }
 

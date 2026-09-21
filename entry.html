@@ -60,56 +60,29 @@
         </div>
       </section>
 
-      <!-- 2. GOODS & COMMODITIES SECTION (Sketch: Category, Type, Quantity, Rate per kg/piece/bag) -->
+      <!-- 2. GOODS & COMMODITIES SECTION (Dynamic Multi-Product Rows) -->
       <section class="form-section">
-        <div class="section-label-tag">2. Goods & Quantity Details</div>
-
-        <!-- Category with Auto-suggest -->
-        <div class="form-group autosuggest-wrapper">
-          <label class="form-label" for="category_input">
-            Category <span class="required-star">*</span>
-          </label>
-          <input type="text" id="category_input" class="form-input" placeholder="Type or select category..." required autocomplete="off">
-          <div id="category-autosuggest-dropdown" class="autosuggest-dropdown"></div>
-          <input type="hidden" id="category_id_hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div class="section-label-tag" style="margin-bottom: 0;">2. Goods & Commodities</div>
+          <button type="button" id="btn-add-product-row" class="btn btn-outline-purple btn-sm" style="font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; font-size: 0.8rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            + Add Another Product
+          </button>
         </div>
 
-        <!-- Type / Product with Auto-suggest -->
-        <div class="form-group autosuggest-wrapper">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label class="form-label" for="product_input" style="margin-bottom: 0;">Type / Item <span class="required-star">*</span></label>
-            <button type="button" id="btn-quick-add-product" class="text-purple font-bold" style="background: none; border: none; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">+ Add New Product</button>
-          </div>
-          <input type="text" id="product_input" class="form-input" placeholder="Type or select item/product..." required autocomplete="off">
-          <div id="product-autosuggest-dropdown" class="autosuggest-dropdown"></div>
-          <input type="hidden" id="product_id_hidden">
+        <!-- Dynamic Container for Product Rows -->
+        <div id="product-rows-container">
+          <!-- Rows injected dynamically by entry.js -->
         </div>
 
-        <!-- Quantity -->
-        <div class="form-group">
-          <label class="form-label" for="quantity">Quantity <span class="required-star">*</span></label>
-          <input type="number" id="quantity" class="form-input" placeholder="Enter quantity" min="0.1" step="any" required>
-        </div>
-
-        <!-- Rate & Units (Per kg, Per piece, Per bag) -->
-        <div class="form-group">
-          <label class="form-label">Rate Unit <span class="required-star">*</span></label>
-          <div class="unit-toggle-row">
-            <button type="button" class="unit-btn active" data-unit="per_kg">Per Kg</button>
-            <button type="button" class="unit-btn" data-unit="per_piece">Per Piece</button>
-            <button type="button" class="unit-btn" data-unit="per_bag">Per Bag</button>
-          </div>
-          <input type="number" id="rate" class="form-input" placeholder="Rate (₹)" min="0.01" step="any" required>
-        </div>
-
-        <!-- Live Total Display -->
-        <div class="rate-calc-box">
-          <span class="calc-label">Calculated Line Total:</span>
+        <!-- Grand Total Calculation Box -->
+        <div class="rate-calc-box" style="margin-top: 14px;">
+          <span class="calc-label">Total Purchase Amount:</span>
           <span class="calc-amount" id="calculated_total_display">₹ 0.00</span>
         </div>
       </section>
 
-      <!-- 3. MODE OF PAYMENT SECTION (Sketch: Cash, UPI, Bank Transfer) -->
+      <!-- 3. MODE OF PAYMENT SECTION (Cash, UPI, Bank Transfer) -->
       <section class="form-section">
         <div class="section-label-tag">3. Mode of Payment</div>
 
@@ -130,27 +103,28 @@
 
         <!-- Sub-section: CASH -->
         <div id="payment-cash-section">
-          <div class="form-group">
-            <label class="form-label" for="cash_amount_input">Cash Amount Received (₹)</label>
-            <input type="number" id="cash_amount_input" class="form-input" placeholder="Enter cash amount" min="0" step="any">
+          <div class="card" style="background: var(--purple-tint); border: 1px solid var(--purple-border); padding: 12px; font-size: 0.85rem; color: var(--purple-primary); margin-top: 4px;">
+            <div style="font-weight: 700; margin-bottom: 2px;">Direct Cash Payment</div>
+            <div style="color: var(--text-secondary); font-size: 0.8rem;">
+              Full bill amount (<strong id="cash-paid-display">₹ 0.00</strong>) is paid in cash directly out of your morning float.
+            </div>
           </div>
         </div>
 
         <!-- Sub-section: UPI -->
         <div id="payment-upi-section" style="display: none;">
-          <div class="form-group">
-            <label class="form-label" for="upi_id_input">UPI Number / UPI ID</label>
-            <input type="text" id="upi_id_input" class="form-input" placeholder="e.g. 9876543210@upi or customer@okaxis">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="upi_utr_input">UTR / Transaction Reference</label>
-            <input type="text" id="upi_utr_input" class="form-input" placeholder="12-digit UPI UTR number">
+          <div class="form-group" style="margin-top: 8px;">
+            <label class="form-label" for="upi_id_input">Firm UPI ID / VPA <span class="required-star">*</span></label>
+            <input type="text" id="upi_id_input" class="form-input" placeholder="e.g. 9876543210@paytm or shop@okhdfcbank">
+            <small class="text-muted" style="display: block; margin-top: 4px; font-size: 0.76rem;">
+              Enter merchant UPI ID. Payment request will be instantly forwarded to Admin for PhonePe execution.
+            </small>
           </div>
         </div>
 
         <!-- Sub-section: BANK TRANSFER (Multi-image Passbook/Cheque upload) -->
         <div id="payment-bank-section" style="display: none;">
-          <div class="form-group">
+          <div class="form-group" style="margin-top: 8px;">
             <label class="form-label">Upload Cheque / Passbook Photos</label>
             <input type="file" id="multi_image_file_input" accept="image/*" multiple style="display: none;">
             <div class="multi-upload-area" id="multi_upload_drop_area">
@@ -175,53 +149,6 @@
       </div>
     </form>
   </main>
-
-  <!-- QUICK ADD PRODUCT MODAL -->
-  <div id="add-product-modal" class="sina-modal-backdrop">
-    <div class="sina-modal-card">
-      <div class="pwa-modal-header">
-        <div class="pwa-badge-purple">New Commodity</div>
-        <button type="button" class="icon-btn" id="btn-close-product-modal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--purple-primary); margin-bottom: 14px;">Add New Product</h3>
-      <form id="quick-add-product-form">
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="modal_prod_category">Category *</label>
-          <select id="modal_prod_category" class="form-select" required>
-            <option value="">-- Choose Category --</option>
-            <option value="__new__">+ Add New Category...</option>
-          </select>
-        </div>
-        <div class="form-group" id="modal_new_cat_group" style="display: none; margin-bottom: 12px;">
-          <label class="form-label" for="modal_new_cat_name">New Category Name *</label>
-          <input type="text" id="modal_new_cat_name" class="form-input" placeholder="e.g. Fertilizers, Dried Fruits">
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="modal_prod_name">Product Name *</label>
-          <input type="text" id="modal_prod_name" class="form-input" placeholder="e.g. Mustard Seed, Soybean" required>
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="modal_prod_type">Type / Variety / Grade</label>
-          <input type="text" id="modal_prod_type" class="form-input" placeholder="e.g. Grade A, Desi, Super">
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label" for="modal_prod_unit">Unit of Measure *</label>
-          <select id="modal_prod_unit" class="form-select" required>
-            <option value="per_kg">Per Kg</option>
-            <option value="per_piece">Per Piece</option>
-            <option value="per_bag">Per Bag</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 18px;">
-          <label class="form-label" for="modal_prod_rate">Default Rate (₹) *</label>
-          <input type="number" id="modal_prod_rate" class="form-input" placeholder="e.g. 45.00" min="0.01" step="any" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Add Product & Select</button>
-      </form>
-    </div>
-  </div>
 
   <!-- Core Scripts -->
   <script src="js/config.js"></script>

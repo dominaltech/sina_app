@@ -344,3 +344,50 @@
   font-size: 1.05rem;
   padding: 14px;
 }
+
+/* DYNAMIC PRODUCT ROW CARD */
+.product-row-card {
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 14px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.product-row-card:focus-within {
+  border-color: var(--purple-primary);
+}
+
+.product-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.product-row-num {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--purple-primary);
+  background: var(--purple-tint);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-remove-row {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+

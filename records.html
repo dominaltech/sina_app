@@ -163,10 +163,10 @@
 <body>
 
   <main class="container">
-    <!-- Top Tabs (Orders vs Firms) -->
-    <div class="records-tabs-bar">
-      <button type="button" class="records-tab-btn active" id="tab-btn-entries">Orders History</button>
-      <button type="button" class="records-tab-btn" id="tab-btn-firms">Firms Directory</button>
+    <!-- Page Header -->
+    <div style="margin-bottom: 14px;">
+      <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--purple-primary); margin: 0;">Orders History</h2>
+      <p class="text-muted" style="font-size: 0.82rem; margin: 3px 0 0 0;">Review your procurement entries, goods purchased, and live payment status</p>
     </div>
 
     <!-- Search and Mode Filter -->
@@ -184,17 +184,10 @@
       </div>
     </div>
 
-    <!-- 1. Orders View -->
+    <!-- Orders View -->
     <section id="view-entries">
       <div id="entries-list-container">
         <div class="card text-center text-muted" style="padding: 24px;">Loading records...</div>
-      </div>
-    </section>
-
-    <!-- 2. Firms View -->
-    <section id="view-firms" style="display: none;">
-      <div id="firms-list-container">
-        <div class="card text-center text-muted" style="padding: 24px;">Loading firms...</div>
       </div>
     </section>
   </main>
